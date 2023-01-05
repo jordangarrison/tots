@@ -7,7 +7,7 @@
 	const sketch: Sketch = (p5) => {
 		p5.setup = () => {
 			// create canvas the size of the browser
-			p5.createCanvas(p5.windowWidth - 50, p5.windowHeight - 50);
+			p5.createCanvas(p5.windowWidth - 50, p5.windowHeight - 130);
 		};
 
 		p5.keyPressed = () => {
