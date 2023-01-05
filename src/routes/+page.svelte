@@ -1,10 +1,11 @@
 <script lang="ts">
-	export const prerender = true;
 	import P5 from 'p5-svelte';
 	import type { Sketch } from 'p5-svelte';
-	let width = 100;
-	let height = 100;
 
+	export const prerender = true;
+
+	let width = 150;
+	let height = 150;
 	let rects: { x: number; y: number; width: number; height: number }[] = [];
 
 	const sketch: Sketch = (p5) => {
