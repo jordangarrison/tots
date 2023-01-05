@@ -2,8 +2,10 @@
 	export const prerender = true;
 	import P5 from 'p5-svelte';
 	import type { Sketch } from 'p5-svelte';
-	let width = 55;
-	let height = 55;
+	let width = 100;
+	let height = 100;
+
+	let rects: { x: number; y: number; width: number; height: number }[] = [];
 
 	const sketch: Sketch = (p5) => {
 		p5.setup = () => {
@@ -42,10 +44,24 @@
 				let x = p5.map(keyIndex, p5.width, 0, 0, Math.floor(Math.random() * p5.width + 1));
 				let y = p5.map(keyIndex, 0, p5.height, Math.floor(Math.random() * p5.height + 1), 0);
 				p5.rect(x, y, width, height);
+				// append the rectangle to the array
+				rects.push({ x, y, width, height });
 			}
 		};
 
-		p5.draw = () => {};
+		p5.draw = () => {
+			// check if mouse is inside a rectangle and if so change the color
+			for (let i = 0; i < rects.length; i++) {
+				if (
+					p5.mouseX > rects[i].x &&
+					p5.mouseX < rects[i].x + rects[i].width &&
+					p5.mouseY > rects[i].y &&
+					p5.mouseY < rects[i].y + rects[i].height
+				) {
+					p5.rect(rects[i].x, rects[i].y, rects[i].width, rects[i].height);
+				}
+			}
+		};
 	};
 </script>
 
