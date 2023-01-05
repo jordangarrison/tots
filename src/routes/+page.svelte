@@ -1,4 +1,5 @@
 <script lang="ts">
+	export const prerender = true;
 	import P5 from 'p5-svelte';
 	import type { Sketch } from 'p5-svelte';
 	let width = 55;
