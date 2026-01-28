@@ -27,16 +27,20 @@
 		box-sizing: border-box;
 	}
 
+	:global(html, body) {
+		height: 100%;
+		overflow: hidden;
+	}
+
 	:global(body) {
 		background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-		min-height: 100vh;
-		overflow-x: hidden;
 	}
 
 	.app-wrapper {
-		min-height: 100vh;
+		height: 100vh;
 		display: flex;
 		flex-direction: column;
+		overflow: hidden;
 	}
 
 	header {
@@ -82,6 +86,10 @@
 	main {
 		flex: 1;
 		padding: 0.5rem;
+		overflow: hidden;
+		display: flex;
+		flex-direction: column;
+		min-height: 0;
 	}
 
 	footer {

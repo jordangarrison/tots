@@ -4,6 +4,9 @@
 
 	export const prerender = true;
 
+	// Canvas container reference
+	let canvasContainer: HTMLElement;
+
 	// Shape size controls
 	let shapeSize = 80;
 
@@ -61,9 +64,22 @@
 	let trail: TrailPoint[] = [];
 	let colorIndex = 0;
 
+	// Calculate canvas size based on container
+	const getCanvasSize = () => {
+		if (canvasContainer) {
+			const rect = canvasContainer.getBoundingClientRect();
+			return {
+				width: Math.floor(rect.width) - 20,
+				height: Math.floor(rect.height) - 10
+			};
+		}
+		return { width: 800, height: 600 };
+	};
+
 	const sketch: Sketch = (p5) => {
 		p5.setup = () => {
-			p5.createCanvas(p5.windowWidth - 50, p5.windowHeight - 130);
+			const size = getCanvasSize();
+			p5.createCanvas(size.width, size.height);
 			p5.background(250, 250, 255);
 			p5.noStroke();
 		};
@@ -361,7 +377,8 @@
 		};
 
 		p5.windowResized = () => {
-			p5.resizeCanvas(p5.windowWidth - 50, p5.windowHeight - 130);
+			const size = getCanvasSize();
+			p5.resizeCanvas(size.width, size.height);
 		};
 	};
 </script>
@@ -374,12 +391,27 @@
 		<span class="hint"><kbd>Space</kbd> confetti!</span>
 		<span class="hint"><kbd>Click</kbd> anywhere!</span>
 	</div>
-	<P5 {sketch} />
+	<div class="canvas-wrapper" bind:this={canvasContainer}>
+		<P5 {sketch} />
+	</div>
 </div>
 
 <style>
 	.game-container {
-		position: relative;
+		display: flex;
+		flex-direction: column;
+		flex: 1;
+		min-height: 0;
+		overflow: hidden;
+	}
+
+	.canvas-wrapper {
+		flex: 1;
+		min-height: 0;
+		display: flex;
+		justify-content: center;
+		align-items: center;
+		overflow: hidden;
 	}
 
 	.controls-hint {
