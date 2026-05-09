@@ -18,6 +18,9 @@ import type { Story } from '../types';
 export const lonelyLantern: Story = {
 	id: 'lonely-lantern',
 	title: 'The Lonely Lantern',
+	description: 'A tiny lantern is lost in the woods. Help them find their family.',
+	emoji: '🏮',
+	accent: 'var(--rp-gold)',
 	startId: 'intro',
 	restId: 'rest',
 	scenes: {

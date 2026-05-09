@@ -45,6 +45,9 @@ export interface Scene {
 export interface Story {
 	id: string;
 	title: string;
+	description: string;
+	emoji: string;
+	accent: string;
 	startId: string;
 	restId: string;
 	scenes: Record<string, Scene>;
