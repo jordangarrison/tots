@@ -10,17 +10,18 @@
 	// Shape size controls
 	let shapeSize = 80;
 
-	// Fun color palettes for kids
+	// Rose Pine palette for the canvas
 	const rainbowColors = [
-		[255, 107, 107], // Red
-		[255, 159, 67],  // Orange
-		[254, 202, 87],  // Yellow
-		[29, 209, 161],  // Green
-		[72, 219, 251],  // Cyan
-		[84, 160, 255],  // Blue
-		[156, 136, 255], // Purple
-		[255, 107, 181], // Pink
+		[235, 111, 146], // Love
+		[246, 193, 119], // Gold
+		[235, 188, 186], // Rose
+		[49, 116, 143],  // Pine
+		[156, 207, 216], // Foam
+		[196, 167, 231], // Iris
 	];
+
+	// Rose Pine surface — drawing canvas background
+	const canvasBg: [number, number, number] = [31, 29, 46];
 
 	// Shape types
 	const shapeTypes = ['circle', 'star', 'heart', 'triangle', 'square', 'diamond'];
@@ -80,7 +81,7 @@
 		p5.setup = () => {
 			const size = getCanvasSize();
 			p5.createCanvas(size.width, size.height);
-			p5.background(250, 250, 255);
+			p5.background(canvasBg[0], canvasBg[1], canvasBg[2]);
 			p5.noStroke();
 		};
 
@@ -197,7 +198,7 @@
 				// Create confetti for each shape before clearing
 				shapes.forEach(s => createConfetti(s.x, s.y, 10));
 				shapes = [];
-				p5.background(250, 250, 255);
+				p5.background(canvasBg[0], canvasBg[1], canvasBg[2]);
 				return false;
 			}
 
@@ -363,7 +364,7 @@
 							y: shape.y + p5.random(-shape.size / 2, shape.size / 2),
 							vx: p5.random(-1, 1),
 							vy: p5.random(-2, 0),
-							color: [255, 255, 150],
+							color: [246, 193, 119],
 							size: p5.random(5, 10),
 							life: 1,
 							maxLife: 30,
@@ -385,12 +386,13 @@
 
 <div class="game-container">
 	<div class="controls-hint">
-		<a href="/" class="back-link" aria-label="Back to game picker">←</a>
-		<span class="hint">Press <kbd>A-Z</kbd> to draw shapes!</span>
+		<a href="/" class="back-link" aria-label="Back to game picker">◄ EXIT</a>
+		<span class="sep">|</span>
+		<span class="hint"><kbd>A-Z</kbd> draw</span>
 		<span class="hint"><kbd>↑↓</kbd> size</span>
-		<span class="hint"><kbd>←→</kbd> colors</span>
-		<span class="hint"><kbd>Space</kbd> confetti!</span>
-		<span class="hint"><kbd>Click</kbd> anywhere!</span>
+		<span class="hint"><kbd>←→</kbd> color</span>
+		<span class="hint"><kbd>SPC</kbd> blast</span>
+		<span class="hint"><kbd>CLK</kbd> shape</span>
 	</div>
 	<div class="canvas-wrapper" bind:this={canvasContainer}>
 		<P5 {sketch} />
@@ -413,6 +415,7 @@
 		justify-content: center;
 		align-items: center;
 		overflow: hidden;
+		padding: 0.25rem;
 	}
 
 	.controls-hint {
@@ -420,57 +423,67 @@
 		flex-wrap: wrap;
 		justify-content: center;
 		align-items: center;
-		gap: 1rem;
-		padding: 0.5rem 1rem;
-		background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-		border-radius: 50px;
+		gap: 0.85rem;
+		padding: 0.6rem 1rem;
+		background: var(--rp-surface);
+		border: 2px solid var(--rp-iris);
+		border-radius: 4px;
 		margin: 0.5rem auto;
 		max-width: fit-content;
-		box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+		box-shadow:
+			0 0 0 2px var(--rp-base),
+			0 0 12px var(--rp-iris);
+		font-family: 'Press Start 2P', cursive;
+		font-size: 0.6rem;
+		letter-spacing: 0.15em;
 	}
 
 	.hint {
-		color: white;
-		font-family: 'Londrina Sketch', cursive, sans-serif;
-		font-size: 1.1rem;
+		color: var(--rp-subtle);
 		display: flex;
 		align-items: center;
-		gap: 0.3rem;
+		gap: 0.4rem;
+	}
+
+	.sep {
+		color: var(--rp-hl-high);
 	}
 
 	.back-link {
-		color: white;
+		color: var(--rp-gold);
 		text-decoration: none;
-		font-family: 'Fredoka One', cursive;
-		font-size: 1.4rem;
-		background: rgba(255, 255, 255, 0.2);
-		border-radius: 50%;
-		width: 2rem;
-		height: 2rem;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		transition: background 0.2s, transform 0.2s;
+		text-shadow: 0 0 6px var(--rp-gold);
+		padding: 0.25rem 0.5rem;
+		border: 2px solid var(--rp-gold);
+		border-radius: 3px;
+		transition: background 0.15s, color 0.15s;
 	}
 
 	.back-link:hover,
 	.back-link:focus-visible {
-		background: rgba(255, 255, 255, 0.4);
-		transform: scale(1.1);
+		background: var(--rp-gold);
+		color: var(--rp-base);
+		text-shadow: none;
 		outline: none;
 	}
 
 	kbd {
-		background: rgba(255, 255, 255, 0.2);
-		border-radius: 5px;
-		padding: 0.2rem 0.5rem;
+		background: var(--rp-overlay);
+		color: var(--rp-foam);
+		text-shadow: 0 0 4px var(--rp-foam);
+		border: 1px solid var(--rp-foam);
+		border-radius: 2px;
+		padding: 0.15rem 0.4rem;
 		font-family: inherit;
-		font-weight: bold;
+		font-weight: normal;
 	}
 
 	:global(canvas) {
-		border-radius: 20px;
-		box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+		border: 3px solid var(--rp-pine);
+		border-radius: 4px;
+		box-shadow:
+			0 0 0 2px var(--rp-base),
+			0 0 18px var(--rp-pine);
 		display: block;
 		margin: 0 auto;
 	}
