@@ -126,10 +126,37 @@ export const lonelyLantern: Story = {
 				ollie: 'Ollie kept gently nudging the lantern back toward the path whenever it wandered. Mini Aussies are herders — that\'s just how they say "I\'ve got you."'
 			},
 			choices: [
-				{ label: '"Yes — and it felt big and a little scary."', nextId: 'lantern_scared' },
-				{ label: '"The trees feel friendlier when I\'m with someone."', nextId: 'lantern_scared' },
-				{ label: '"I\'m with you now. We can be new together."', nextId: 'lantern_scared' }
+				{ label: '"Yes — and it felt big and a little scary."', nextId: 'forest_validate' },
+				{ label: '"The trees feel friendlier when I\'m with someone."', nextId: 'forest_company' },
+				{ label: '"I\'m with you now. We can be new together."', nextId: 'forest_present' }
 			]
+		},
+
+		forest_validate: {
+			id: 'forest_validate',
+			art: { emoji: '🏮', background: '🌲💛' },
+			narration: [
+				'The lantern\'s flame got just a little taller. "You felt that too?" they said. "I think feeling something at the same time as a friend makes it a little smaller."'
+			],
+			choices: [{ label: 'Keep walking together.', nextId: 'lantern_scared' }]
+		},
+
+		forest_company: {
+			id: 'forest_company',
+			art: { emoji: '🌲', background: '🌲🌲🌲' },
+			narration: [
+				'The lantern looked at the dark trees like they were hearing them for the first time. "I think you\'re right," they whispered. "They do feel friendlier."'
+			],
+			choices: [{ label: 'Keep walking together.', nextId: 'lantern_scared' }]
+		},
+
+		forest_present: {
+			id: 'forest_present',
+			art: { emoji: '🏮', background: '🌌✨' },
+			narration: [
+				'The lantern leaned, just a tiny bit, against {name}\'s side as they walked. "New together," they repeated. "I like that."'
+			],
+			choices: [{ label: 'Keep walking together.', nextId: 'lantern_scared' }]
 		},
 
 		lantern_scared: {
@@ -142,10 +169,37 @@ export const lonelyLantern: Story = {
 			feelingNote:
 				'When we\'re tired and a little scared, our worries can feel very big. That happens to everyone — even grown-ups.',
 			choices: [
-				{ label: 'Hold the lantern close, very gently.', nextId: 'reunion' },
-				{ label: 'Tell the lantern about a time you felt scared too.', nextId: 'reunion' },
-				{ label: 'Hum a slow, quiet song together.', nextId: 'reunion' }
+				{ label: 'Hold the lantern close, very gently.', nextId: 'comfort_hold' },
+				{ label: 'Tell the lantern about a time you felt scared too.', nextId: 'comfort_share' },
+				{ label: 'Hum a slow, quiet song together.', nextId: 'comfort_hum' }
 			]
+		},
+
+		comfort_hold: {
+			id: 'comfort_hold',
+			art: { emoji: '🤲', background: '🏮💛' },
+			narration: [
+				'{Name} held the lantern close, the way you hold something precious. The little flame steadied. Even being held can be its own kind of warm.'
+			],
+			choices: [{ label: 'Keep walking together.', nextId: 'reunion' }]
+		},
+
+		comfort_share: {
+			id: 'comfort_share',
+			art: { emoji: '🏮', background: '💬🌲' },
+			narration: [
+				'{Name} told the lantern about a time when {they} had felt scared too. The lantern listened carefully — and didn\'t feel like the only scared one anymore.'
+			],
+			choices: [{ label: 'Keep walking together.', nextId: 'reunion' }]
+		},
+
+		comfort_hum: {
+			id: 'comfort_hum',
+			art: { emoji: '🎵', background: '🏮🎶' },
+			narration: [
+				'{Name} started humming, very softly. After a moment, the lantern joined in — a tiny buzzing hum that meant "I\'m here." Together it sounded like home.'
+			],
+			choices: [{ label: 'Keep walking together.', nextId: 'reunion' }]
 		},
 
 		reunion: {
