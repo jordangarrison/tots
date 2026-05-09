@@ -124,12 +124,13 @@
 		flex: 1;
 		min-height: 0;
 		display: grid;
-		grid-template-rows: auto 1fr auto auto;
+		grid-template-rows: auto minmax(0, 1fr) auto auto;
 		gap: 1rem;
 		padding: 1rem;
 		max-width: 720px;
 		width: 100%;
 		margin: 0 auto;
+		overflow: hidden;
 	}
 
 	.art {
@@ -175,7 +176,9 @@
 		font-size: 1.35rem;
 		line-height: 1.4;
 		color: var(--rp-text);
+		min-height: 0;
 		overflow-y: auto;
+		overscroll-behavior: contain;
 		padding: 0 0.25rem;
 		display: flex;
 		flex-direction: column;
@@ -263,5 +266,43 @@
 		color: var(--rp-text);
 		border-color: var(--rp-subtle);
 		box-shadow: 0 0 8px var(--rp-subtle);
+	}
+
+	@media (max-width: 540px) {
+		.scene {
+			gap: 0.5rem;
+			padding: 0.5rem;
+		}
+		.art {
+			min-height: 80px;
+			padding: 0.6rem;
+		}
+		.emoji {
+			font-size: 3rem;
+		}
+		.bg {
+			font-size: 2.25rem;
+			letter-spacing: 0.25rem;
+		}
+		.narration {
+			font-size: 1.15rem;
+			line-height: 1.35;
+			gap: 0.45rem;
+		}
+		.play {
+			padding: 0.45rem 0.9rem;
+			font-size: 0.6rem;
+		}
+		.choices {
+			gap: 0.4rem;
+		}
+		.choice {
+			padding: 0.55rem 0.75rem;
+			font-size: 1.05rem;
+		}
+		.choice.quiet {
+			font-size: 0.9rem;
+			padding: 0.45rem 0.75rem;
+		}
 	}
 </style>
