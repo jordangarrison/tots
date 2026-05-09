@@ -89,11 +89,11 @@
 
 	header {
 		text-align: center;
-		padding: 0.75rem 0.5rem;
+		padding: 0.4rem 0.5rem;
 		background: var(--rp-surface);
-		border-bottom: 4px solid var(--rp-iris);
+		border-bottom: 3px solid var(--rp-iris);
 		box-shadow:
-			0 0 12px var(--rp-iris),
+			0 0 10px var(--rp-iris),
 			inset 0 0 24px rgba(196, 167, 231, 0.15);
 	}
 
@@ -107,7 +107,7 @@
 
 	.title {
 		font-family: 'Press Start 2P', cursive;
-		font-size: 2rem;
+		font-size: 1.5rem;
 		display: flex;
 		gap: 0.25rem;
 		margin: 0;
@@ -150,7 +150,7 @@
 
 	main {
 		flex: 1;
-		padding: 0.5rem;
+		padding: 0.25rem 0.5rem;
 		overflow: hidden;
 		display: flex;
 		flex-direction: column;
@@ -159,15 +159,15 @@
 
 	footer {
 		font-family: 'Press Start 2P', cursive;
-		font-size: 0.65rem;
+		font-size: 0.55rem;
 		background: var(--rp-surface);
 		color: var(--rp-subtle);
-		border-top: 4px solid var(--rp-pine);
-		box-shadow: 0 0 12px var(--rp-pine);
+		border-top: 3px solid var(--rp-pine);
+		box-shadow: 0 0 10px var(--rp-pine);
 		display: flex;
 		justify-content: center;
 		align-items: center;
-		padding: 0.6rem;
+		padding: 0.35rem;
 		letter-spacing: 0.1em;
 	}
 

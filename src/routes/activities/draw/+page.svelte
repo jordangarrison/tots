@@ -70,8 +70,8 @@
 		if (canvasContainer) {
 			const rect = canvasContainer.getBoundingClientRect();
 			return {
-				width: Math.floor(rect.width) - 20,
-				height: Math.floor(rect.height) - 10
+				width: Math.floor(rect.width) - 8,
+				height: Math.floor(rect.height) - 8
 			};
 		}
 		return { width: 800, height: 600 };
@@ -415,7 +415,6 @@
 		justify-content: center;
 		align-items: center;
 		overflow: hidden;
-		padding: 0.25rem;
 	}
 
 	.controls-hint {
@@ -423,18 +422,18 @@
 		flex-wrap: wrap;
 		justify-content: center;
 		align-items: center;
-		gap: 0.85rem;
-		padding: 0.6rem 1rem;
+		gap: 0.75rem;
+		padding: 0.35rem 0.85rem;
 		background: var(--rp-surface);
 		border: 2px solid var(--rp-iris);
 		border-radius: 4px;
-		margin: 0.5rem auto;
+		margin: 0 auto 0.35rem;
 		max-width: fit-content;
 		box-shadow:
 			0 0 0 2px var(--rp-base),
 			0 0 12px var(--rp-iris);
 		font-family: 'Press Start 2P', cursive;
-		font-size: 0.6rem;
+		font-size: 0.55rem;
 		letter-spacing: 0.15em;
 	}
 
