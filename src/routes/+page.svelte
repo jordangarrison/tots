@@ -36,6 +36,15 @@
 			href: '/activities/draw',
 			accent: 'var(--rp-iris)',
 			category: 'activities'
+		},
+		{
+			id: 'adventure',
+			title: 'ADVENTURE',
+			description: 'Choose your hero. Walk a kind path.',
+			emoji: '🏰',
+			href: '/games/adventure',
+			accent: 'var(--rp-love)',
+			category: 'games'
 		}
 	];
 
