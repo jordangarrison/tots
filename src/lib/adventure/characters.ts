@@ -41,7 +41,8 @@ export const characters: Record<CharacterId, Character> = {
 			theirs: 'his',
 			themselves: 'himself'
 		},
-		accent: 'var(--rp-foam)'
+		accent: 'var(--rp-foam)',
+		description: 'A miniature Australian shepherd with a very short tail.'
 	}
 };
 

@@ -15,6 +15,7 @@ export interface Character {
 	emoji: string;
 	pronouns: Pronouns;
 	accent: string;
+	description?: string;
 }
 
 export interface Choice {

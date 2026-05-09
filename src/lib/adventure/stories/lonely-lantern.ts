@@ -34,7 +34,7 @@ export const lonelyLantern: Story = {
 			flavor: {
 				jane: 'Jane hummed quietly to herself — a song her grandmother had taught her.',
 				isla: 'Just one star was out so far. Isla\'s favorite one. She nodded at it, like saying hello.',
-				ollie: 'Ollie\'s ears went up. His tail thumped, just once, against the soft rug.'
+				ollie: 'Ollie\'s ears were already listening — the tips perked up first, the rest of him a beat behind. His little stub of a tail gave one quick, sure wiggle. That was Ollie\'s way of saying yes.'
 			},
 			choices: [{ label: 'Go and see who the light belongs to.', nextId: 'meet_lantern' }]
 		},
@@ -69,9 +69,9 @@ export const lonelyLantern: Story = {
 			flavor: {
 				jane: 'Wildflowers nodded as Jane passed, as if to say yes, yes, this way.',
 				isla: 'More stars were coming out now. Isla counted them under her breath. Three. Four. Five.',
-				ollie: 'Ollie put his nose to the wind and snuffled. He could smell something sweet — like home.'
+				ollie: 'Ollie put his nose right up into the wind. Mini Aussies have very good noses, and his caught something sweet drifting through the trees — something like home.'
 			},
-			choices: [{ label: 'Keep walking together.', nextId: 'lantern_scared' }]
+			choices: [{ label: 'Keep walking together.', nextId: 'forest_path' }]
 		},
 
 		rabbit_helper: {
@@ -87,9 +87,9 @@ export const lonelyLantern: Story = {
 			flavor: {
 				jane: 'Jane left a few crumbs at the base of the fern, in case any other small friends came by later.',
 				isla: 'Isla noticed the rabbit\'s ears were a little crooked. She thought it made him look very wise.',
-				ollie: 'Ollie wagged his tail slow and friendly, the way he did when he met someone new.'
+				ollie: 'Ollie\'s whole back end wiggled — which is what Ollie did instead of wagging, since he didn\'t have much tail to work with. The rabbit understood perfectly.'
 			},
-			choices: [{ label: 'Follow the rabbit.', nextId: 'lantern_scared' }]
+			choices: [{ label: 'Follow the rabbit.', nextId: 'forest_path' }]
 		},
 
 		owl_helper: {
@@ -102,7 +102,34 @@ export const lonelyLantern: Story = {
 			],
 			feelingNote:
 				'Sometimes the most helpful thing we can do is stop, and listen. The world has a lot to tell us if we get quiet.',
-			choices: [{ label: 'Walk toward the owl\'s song.', nextId: 'lantern_scared' }]
+			flavor: {
+				jane: 'Jane closed her eyes. She could hear the smallest sounds — a leaf settling, a cricket starting up, her own quiet heart.',
+				isla: 'Isla looked up between the branches. The stars made a tiny pattern she\'d never seen before. She decided to remember it.',
+				ollie: 'Ollie\'s ears swiveled — one one way, one the other — listening in two directions at once.'
+			},
+			choices: [{ label: 'Walk toward the owl\'s song.', nextId: 'forest_path' }]
+		},
+
+		forest_path: {
+			id: 'forest_path',
+			art: { emoji: '🌲', background: '🌌🦋' },
+			narration: [
+				'The woods got quieter the deeper they went. Tall pines made a soft, hushed ceiling overhead.',
+				'The little lantern\'s flame reached out and lit up the moss on the trees, the curl of a fern, the silver back of a sleeping snail.',
+				'After a while, the lantern looked up at {name}. "Have you ever been somewhere new at night before?"'
+			],
+			feelingNote:
+				'Walking with a friend can make a long path feel shorter. That\'s a kind of magic, too.',
+			flavor: {
+				jane: 'Jane brushed her hand along a low branch as they passed, the way you say hello to a tree.',
+				isla: 'A moth with moon-pattern wings rested on the lantern for a moment, then floated away. Isla decided that meant good luck.',
+				ollie: 'Ollie kept gently nudging the lantern back toward the path whenever it wandered. Mini Aussies are herders — that\'s just how they say "I\'ve got you."'
+			},
+			choices: [
+				{ label: '"Yes — and it felt big and a little scary."', nextId: 'lantern_scared' },
+				{ label: '"The trees feel friendlier when I\'m with someone."', nextId: 'lantern_scared' },
+				{ label: '"I\'m with you now. We can be new together."', nextId: 'lantern_scared' }
+			]
 		},
 
 		lantern_scared: {
