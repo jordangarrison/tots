@@ -761,25 +761,25 @@
 		display: flex;
 		justify-content: center;
 		align-items: center;
-		background: var(--rp-base);
+		background: #ffffff;
+		border: 2px solid var(--rp-pine);
 		border-radius: 4px;
+		box-shadow: 0 0 18px var(--rp-pine);
 		overflow: hidden;
+		isolation: isolate;
 	}
 
 	.canvas-draw,
 	.canvas-bg {
 		position: absolute;
+		inset: 0;
+		margin: auto;
 		max-width: 100%;
 		max-height: 100%;
 		width: auto;
 		height: auto;
 		aspect-ratio: 4 / 3;
 		display: block;
-		border: 3px solid var(--rp-pine);
-		border-radius: 4px;
-		box-shadow:
-			0 0 0 2px var(--rp-base),
-			0 0 18px var(--rp-pine);
 		background: #ffffff;
 		image-rendering: auto;
 	}
@@ -788,8 +788,6 @@
 		mix-blend-mode: multiply;
 		pointer-events: none;
 		background: transparent;
-		box-shadow: none;
-		border-color: transparent;
 	}
 
 	.canvas-draw {
