@@ -50,5 +50,6 @@
 		story={chosenStory}
 		character={characters[characterId]}
 		onExit={exitToStories}
+		onHome={backToArcade}
 	/>
 {/if}
