@@ -1,6 +1,7 @@
 <script lang="ts">
 	import P5 from 'p5-svelte';
 	import type { Sketch } from 'p5-svelte';
+	import { printCanvas } from '$lib/print';
 
 	export const prerender = true;
 
@@ -382,6 +383,12 @@
 			p5.resizeCanvas(size.width, size.height);
 		};
 	};
+
+	const printDrawing = () => {
+		const canvas = canvasContainer?.querySelector('canvas') as HTMLCanvasElement | null;
+		if (!canvas) return;
+		printCanvas(canvas, 'My Drawing');
+	};
 </script>
 
 <div class="game-container">
@@ -393,6 +400,10 @@
 		<span class="hint"><kbd>←→</kbd> color</span>
 		<span class="hint"><kbd>SPC</kbd> blast</span>
 		<span class="hint"><kbd>CLK</kbd> shape</span>
+		<span class="sep">|</span>
+		<button type="button" class="print-btn" on:click={printDrawing} title="Print this drawing">
+			🖨 PRINT
+		</button>
 	</div>
 	<div class="canvas-wrapper" bind:this={canvasContainer}>
 		<P5 {sketch} />
@@ -461,6 +472,28 @@
 	.back-link:hover,
 	.back-link:focus-visible {
 		background: var(--rp-gold);
+		color: var(--rp-base);
+		text-shadow: none;
+		outline: none;
+	}
+
+	.print-btn {
+		font-family: inherit;
+		font-size: inherit;
+		letter-spacing: inherit;
+		color: var(--rp-foam);
+		background: transparent;
+		text-shadow: 0 0 6px var(--rp-foam);
+		padding: 0.25rem 0.5rem;
+		border: 2px solid var(--rp-foam);
+		border-radius: 3px;
+		cursor: pointer;
+		transition: background 0.15s, color 0.15s;
+	}
+
+	.print-btn:hover,
+	.print-btn:focus-visible {
+		background: var(--rp-foam);
 		color: var(--rp-base);
 		text-shadow: none;
 		outline: none;
