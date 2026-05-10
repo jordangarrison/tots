@@ -38,6 +38,15 @@
 			category: 'activities'
 		},
 		{
+			id: 'coloring',
+			title: 'COLOR',
+			description: 'Pick a page or upload your own. Stay in the lines (or don’t).',
+			emoji: '🎨',
+			href: '/activities/coloring',
+			accent: 'var(--rp-foam)',
+			category: 'activities'
+		},
+		{
 			id: 'adventure',
 			title: 'ADVENTURE',
 			description: 'Choose your hero. Walk a kind path.',
