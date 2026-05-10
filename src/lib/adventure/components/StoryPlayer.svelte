@@ -7,6 +7,7 @@
 	export let story: Story;
 	export let character: Character;
 	export let onExit: () => void;
+	export let onHome: () => void;
 
 	let currentId = story.startId;
 	let returnFromRestId: string | null = null;
@@ -39,6 +40,11 @@
 		returnFromRestId = null;
 	}
 
+	function exitHome() {
+		cancel();
+		onHome();
+	}
+
 	function play() {
 		if ($playing) {
 			cancel();
@@ -55,6 +61,10 @@
 </script>
 
 <article class="scene" style="--accent: {character.accent};">
+	<button class="exit" type="button" on:click={exitHome} aria-label="Back to game picker">
+		◄ EXIT
+	</button>
+
 	<header class="art" aria-hidden="true">
 		{#if scene.art.background}
 			<div class="bg">{scene.art.background}</div>
@@ -124,13 +134,36 @@
 		flex: 1;
 		min-height: 0;
 		display: grid;
-		grid-template-rows: auto minmax(0, 1fr) auto auto;
+		grid-template-rows: auto auto minmax(0, 1fr) auto auto;
 		gap: 1rem;
 		padding: 1rem;
 		max-width: 720px;
 		width: 100%;
 		margin: 0 auto;
 		overflow: hidden;
+	}
+
+	.exit {
+		justify-self: start;
+		background: transparent;
+		border: 2px solid var(--rp-gold);
+		border-radius: 3px;
+		color: var(--rp-gold);
+		font-family: 'Press Start 2P', cursive;
+		font-size: 0.55rem;
+		letter-spacing: 0.15em;
+		padding: 0.25rem 0.5rem;
+		cursor: pointer;
+		text-shadow: 0 0 6px var(--rp-gold);
+		transition: background 0.15s, color 0.15s;
+	}
+
+	.exit:hover,
+	.exit:focus-visible {
+		background: var(--rp-gold);
+		color: var(--rp-base);
+		text-shadow: none;
+		outline: none;
 	}
 
 	.art {
@@ -272,6 +305,10 @@
 		.scene {
 			gap: 0.5rem;
 			padding: 0.5rem;
+		}
+		.exit {
+			font-size: 0.55rem;
+			padding: 0.3rem 0.6rem;
 		}
 		.art {
 			min-height: 80px;
