@@ -1,95 +1,111 @@
-const canvasToBlob = (canvas: HTMLCanvasElement): Promise<Blob | null> =>
-	new Promise((resolve) => {
-		try {
-			canvas.toBlob((blob) => resolve(blob), 'image/png');
-		} catch {
-			resolve(null);
-		}
-	});
+const escapeAttr = (s: string) => s.replace(/[<>&"']/g, '');
 
-export const printCanvas = async (source: HTMLCanvasElement, title = 'Drawing') => {
-	const blob = await canvasToBlob(source);
-	if (!blob) return;
-	const url = URL.createObjectURL(blob);
-
-	const safeTitle = title.replace(/[<>&"']/g, '');
-
-	const container = document.createElement('div');
-	container.className = 'tots-print-area';
-
-	const img = document.createElement('img');
-	img.alt = safeTitle;
-	img.draggable = false;
-	container.appendChild(img);
-
-	const style = document.createElement('style');
-	style.textContent = `
-.tots-print-area { display: none; }
-@media print {
-	html, body {
-		overflow: visible !important;
-		height: auto !important;
-		background: #ffffff !important;
+export const printCanvas = (source: HTMLCanvasElement, title = 'Drawing') => {
+	let dataUrl: string;
+	try {
+		dataUrl = source.toDataURL('image/png');
+	} catch {
+		alert('Could not prepare this drawing for printing.');
+		return;
 	}
-	body > *:not(.tots-print-area) { display: none !important; }
-	.tots-print-area {
-		display: block !important;
-		background: #ffffff;
+
+	const safeTitle = escapeAttr(title);
+
+	const win = window.open('', '_blank', 'width=900,height=700');
+	if (!win) {
+		alert('To print, please allow pop-ups for this site, then click PRINT again.');
+		return;
+	}
+
+	const html = `<!doctype html>
+<html>
+<head>
+<meta charset="utf-8" />
+<title>${safeTitle}</title>
+<style>
+	@page { margin: 0.4in; }
+	html, body {
 		margin: 0;
 		padding: 0;
+		background: #ffffff;
+		font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 	}
-	.tots-print-area img {
+	.bar {
+		position: sticky;
+		top: 0;
+		display: flex;
+		gap: 8px;
+		justify-content: center;
+		padding: 10px;
+		background: #f4f4f5;
+		border-bottom: 1px solid #d4d4d8;
+	}
+	.bar button {
+		padding: 8px 16px;
+		font: inherit;
+		font-size: 14px;
+		background: #ffffff;
+		border: 1px solid #d4d4d8;
+		border-radius: 6px;
+		cursor: pointer;
+	}
+	.bar button:hover { background: #fafafa; }
+	.stage {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		padding: 16px;
+		min-height: calc(100vh - 60px);
+		box-sizing: border-box;
+	}
+	img {
 		display: block;
-		width: 100%;
 		max-width: 100%;
+		max-height: calc(100vh - 100px);
 		height: auto;
-		margin: 0 auto;
+		width: auto;
 	}
-	@page { margin: 0.4in; }
-}`;
-
-	document.head.appendChild(style);
-	document.body.appendChild(container);
-
-	let cleaned = false;
-	let onAfterPrint: (() => void) | null = null;
-
-	const cleanup = () => {
-		if (cleaned) return;
-		cleaned = true;
-		URL.revokeObjectURL(url);
-		if (container.parentNode) container.parentNode.removeChild(container);
-		if (style.parentNode) style.parentNode.removeChild(style);
-		if (onAfterPrint) {
-			window.removeEventListener('afterprint', onAfterPrint);
-			onAfterPrint = null;
+	@media print {
+		.bar { display: none; }
+		.stage { padding: 0; min-height: auto; }
+		img {
+			max-width: 100%;
+			max-height: 100vh;
+			page-break-inside: avoid;
+			break-inside: avoid;
 		}
-	};
-
-	let printed = false;
-	const triggerPrint = () => {
-		if (printed) return;
-		printed = true;
-
-		onAfterPrint = () => setTimeout(cleanup, 300);
-		window.addEventListener('afterprint', onAfterPrint);
-
-		const originalTitle = document.title;
-		document.title = safeTitle;
-		try {
-			window.print();
-		} catch {
-			cleanup();
-		}
-		document.title = originalTitle;
-	};
-
-	img.addEventListener('error', cleanup, { once: true });
-	img.addEventListener('load', triggerPrint, { once: true });
-	img.src = url;
-	if (typeof img.decode === 'function') {
-		img.decode().then(triggerPrint).catch(() => {
-			// load event listener will fire as fallback
-		});
 	}
+</style>
+</head>
+<body>
+<div class="bar">
+	<button id="print-btn" type="button">Print</button>
+	<button id="close-btn" type="button">Close</button>
+</div>
+<div class="stage">
+	<img src="${dataUrl}" alt="${safeTitle}" />
+</div>
+<script>
+	(function () {
+		var img = document.querySelector('img');
+		var printBtn = document.getElementById('print-btn');
+		var closeBtn = document.getElementById('close-btn');
+		printBtn.addEventListener('click', function () { window.print(); });
+		closeBtn.addEventListener('click', function () { window.close(); });
+		function go() {
+			try { window.focus(); window.print(); } catch (e) {}
+		}
+		if (img.complete) {
+			setTimeout(go, 100);
+		} else {
+			img.addEventListener('load', function () { setTimeout(go, 100); });
+		}
+	})();
+</script>
+</body>
+</html>`;
+
+	win.document.open();
+	win.document.write(html);
+	win.document.close();
 };
