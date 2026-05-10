@@ -61,8 +61,8 @@
 </script>
 
 <article class="scene" style="--accent: {character.accent};">
-	<button class="exit" type="button" on:click={exitHome} aria-label="Exit to arcade home">
-		<span aria-hidden="true">✕</span> EXIT
+	<button class="exit" type="button" on:click={exitHome} aria-label="Back to game picker">
+		◄ EXIT
 	</button>
 
 	<header class="art" aria-hidden="true">
@@ -144,21 +144,25 @@
 	}
 
 	.exit {
-		justify-self: end;
+		justify-self: start;
 		background: transparent;
-		border: 2px solid var(--rp-muted);
-		color: var(--rp-subtle);
+		border: 2px solid var(--rp-gold);
+		border-radius: 3px;
+		color: var(--rp-gold);
 		font-family: 'Press Start 2P', cursive;
-		font-size: 0.6rem;
-		letter-spacing: 0.2em;
-		padding: 0.4rem 0.8rem;
+		font-size: 0.55rem;
+		letter-spacing: 0.15em;
+		padding: 0.25rem 0.5rem;
 		cursor: pointer;
+		text-shadow: 0 0 6px var(--rp-gold);
+		transition: background 0.15s, color 0.15s;
 	}
 
 	.exit:hover,
 	.exit:focus-visible {
-		color: var(--rp-text);
-		border-color: var(--rp-text);
+		background: var(--rp-gold);
+		color: var(--rp-base);
+		text-shadow: none;
 		outline: none;
 	}
 
