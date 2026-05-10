@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { templates, type ColoringTemplate } from '$lib/coloring/templates';
+	import { printCanvas } from '$lib/print';
 
 	export const prerender = true;
 
@@ -22,6 +23,8 @@
 	let drawing = false;
 	let lastX = 0;
 	let lastY = 0;
+	let activePointerId: number | null = null;
+	let stylusMode = false;
 
 	let activeTemplateId: string | null = templates[0]?.id ?? null;
 	let hasCustomBg = false;
@@ -144,10 +147,17 @@
 		return { x, y };
 	};
 
+	const isInputAllowed = (e: PointerEvent) => {
+		if (!stylusMode) return true;
+		return e.pointerType === 'pen';
+	};
+
 	const startDraw = (e: PointerEvent) => {
 		if (e.button !== undefined && e.button !== 0) return;
+		if (!isInputAllowed(e)) return;
 		e.preventDefault();
 		drawCanvas.setPointerCapture(e.pointerId);
+		activePointerId = e.pointerId;
 		saveHistory();
 		drawing = true;
 		const { x, y } = getCoords(e);
@@ -163,6 +173,8 @@
 
 	const moveDraw = (e: PointerEvent) => {
 		if (!drawing) return;
+		if (activePointerId !== null && e.pointerId !== activePointerId) return;
+		if (!isInputAllowed(e)) return;
 		e.preventDefault();
 		const { x, y } = getCoords(e);
 
@@ -182,7 +194,9 @@
 
 	const endDraw = (e: PointerEvent) => {
 		if (!drawing) return;
+		if (activePointerId !== null && e.pointerId !== activePointerId) return;
 		drawing = false;
+		activePointerId = null;
 		try {
 			drawCanvas.releasePointerCapture(e.pointerId);
 		} catch {
@@ -190,19 +204,24 @@
 		}
 	};
 
-	const saveImage = () => {
+	const compositeCanvas = (): HTMLCanvasElement | null => {
 		const out = document.createElement('canvas');
 		out.width = CANVAS_W;
 		out.height = CANVAS_H;
 		const ctx = out.getContext('2d');
-		if (!ctx) return;
+		if (!ctx) return null;
 		ctx.fillStyle = '#ffffff';
 		ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
 		ctx.drawImage(drawCanvas, 0, 0);
 		ctx.globalCompositeOperation = 'multiply';
 		ctx.drawImage(bgCanvas, 0, 0);
 		ctx.globalCompositeOperation = 'source-over';
+		return out;
+	};
 
+	const saveImage = () => {
+		const out = compositeCanvas();
+		if (!out) return;
 		out.toBlob((blob) => {
 			if (!blob) return;
 			const url = URL.createObjectURL(blob);
@@ -212,6 +231,12 @@
 			a.click();
 			URL.revokeObjectURL(url);
 		}, 'image/png');
+	};
+
+	const printImage = () => {
+		const out = compositeCanvas();
+		if (!out) return;
+		printCanvas(out, 'Coloring Page');
 	};
 
 	onMount(() => {
@@ -293,6 +318,22 @@
 		</div>
 
 		<div class="tool-group">
+			<button
+				type="button"
+				class="tool-btn stylus"
+				class:active={stylusMode}
+				on:click={() => (stylusMode = !stylusMode)}
+				title={stylusMode
+					? 'Stylus only — palms and fingers ignored. Click to allow any input.'
+					: 'Allow any input. Click to ignore palms and fingers (stylus only).'}
+				aria-pressed={stylusMode}
+			>
+				<span aria-hidden="true">✎</span>
+				<span class="tool-label">{stylusMode ? 'STYLUS' : 'ANY INPUT'}</span>
+			</button>
+		</div>
+
+		<div class="tool-group">
 			<button type="button" class="tool-btn ghost" on:click={undo} title="Undo last stroke">
 				<span aria-hidden="true">↶</span>
 				<span class="tool-label">UNDO</span>
@@ -300,6 +341,10 @@
 			<button type="button" class="tool-btn ghost" on:click={clearDrawing} title="Clear coloring">
 				<span aria-hidden="true">✕</span>
 				<span class="tool-label">CLEAR</span>
+			</button>
+			<button type="button" class="tool-btn ghost" on:click={printImage} title="Print this page">
+				<span aria-hidden="true">🖨</span>
+				<span class="tool-label">PRINT</span>
 			</button>
 			<button type="button" class="tool-btn ghost" on:click={saveImage} title="Save as PNG">
 				<span aria-hidden="true">💾</span>
@@ -482,6 +527,26 @@
 		box-shadow:
 			0 0 0 2px var(--rp-base),
 			0 0 12px var(--rp-foam);
+	}
+
+	.tool-btn.stylus {
+		border-color: var(--rp-rose);
+		color: var(--rp-rose);
+	}
+
+	.tool-btn.stylus:hover,
+	.tool-btn.stylus:focus-visible {
+		background: var(--rp-rose);
+		color: var(--rp-base);
+		box-shadow: 0 0 10px var(--rp-rose);
+	}
+
+	.tool-btn.stylus.active {
+		background: var(--rp-rose);
+		color: var(--rp-base);
+		box-shadow:
+			0 0 0 2px var(--rp-base),
+			0 0 12px var(--rp-rose);
 	}
 
 	.size-btn {
