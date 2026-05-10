@@ -12,94 +12,84 @@ export const printCanvas = async (source: HTMLCanvasElement, title = 'Drawing') 
 	if (!blob) return;
 	const url = URL.createObjectURL(blob);
 
-	const iframe = document.createElement('iframe');
-	iframe.setAttribute('aria-hidden', 'true');
-	iframe.style.cssText = [
-		'position:fixed',
-		'top:0',
-		'left:0',
-		'width:100%',
-		'height:100%',
-		'border:0',
-		'opacity:0',
-		'pointer-events:none',
-		'z-index:-1'
-	].join(';');
-	document.body.appendChild(iframe);
+	const safeTitle = title.replace(/[<>&"']/g, '');
+
+	const container = document.createElement('div');
+	container.className = 'tots-print-area';
+
+	const img = document.createElement('img');
+	img.alt = safeTitle;
+	img.draggable = false;
+	container.appendChild(img);
+
+	const style = document.createElement('style');
+	style.textContent = `
+.tots-print-area { display: none; }
+@media print {
+	html, body {
+		overflow: visible !important;
+		height: auto !important;
+		background: #ffffff !important;
+	}
+	body > *:not(.tots-print-area) { display: none !important; }
+	.tots-print-area {
+		display: block !important;
+		background: #ffffff;
+		margin: 0;
+		padding: 0;
+	}
+	.tots-print-area img {
+		display: block;
+		width: 100%;
+		max-width: 100%;
+		height: auto;
+		margin: 0 auto;
+	}
+	@page { margin: 0.4in; }
+}`;
+
+	document.head.appendChild(style);
+	document.body.appendChild(container);
 
 	let cleaned = false;
+	let onAfterPrint: (() => void) | null = null;
+
 	const cleanup = () => {
 		if (cleaned) return;
 		cleaned = true;
 		URL.revokeObjectURL(url);
-		if (iframe.parentNode) iframe.parentNode.removeChild(iframe);
+		if (container.parentNode) container.parentNode.removeChild(container);
+		if (style.parentNode) style.parentNode.removeChild(style);
+		if (onAfterPrint) {
+			window.removeEventListener('afterprint', onAfterPrint);
+			onAfterPrint = null;
+		}
 	};
-
-	const doc = iframe.contentDocument;
-	if (!doc) {
-		cleanup();
-		return;
-	}
-
-	const safeTitle = title.replace(/[<>&"']/g, '');
-
-	doc.open();
-	doc.write(`<!doctype html>
-<html>
-<head>
-<title>${safeTitle}</title>
-<style>
-	@page { margin: 0.4in; }
-	html, body { margin: 0; padding: 0; background: #ffffff; height: 100%; }
-	body {
-		display: flex;
-		align-items: center;
-		justify-content: center;
-	}
-	img {
-		max-width: 100%;
-		max-height: 100vh;
-		display: block;
-		object-fit: contain;
-	}
-	@media print {
-		html, body { height: auto; }
-		body { display: block; }
-		img { width: 100%; height: auto; max-height: none; }
-	}
-</style>
-</head>
-<body><img alt="${safeTitle}" /></body>
-</html>`);
-	doc.close();
-
-	const win = iframe.contentWindow;
-	const img = doc.querySelector('img') as HTMLImageElement | null;
-	if (!win || !img) {
-		cleanup();
-		return;
-	}
-
-	win.addEventListener('afterprint', () => setTimeout(cleanup, 500));
-	img.addEventListener('error', cleanup);
 
 	let printed = false;
 	const triggerPrint = () => {
 		if (printed) return;
 		printed = true;
+
+		onAfterPrint = () => setTimeout(cleanup, 300);
+		window.addEventListener('afterprint', onAfterPrint);
+
+		const originalTitle = document.title;
+		document.title = safeTitle;
 		try {
-			win.focus();
-			win.print();
+			window.print();
 		} catch {
 			cleanup();
 		}
+		document.title = originalTitle;
 	};
 
+	img.addEventListener('error', cleanup, { once: true });
 	img.addEventListener('load', triggerPrint, { once: true });
 	img.src = url;
 	if (typeof img.decode === 'function') {
 		img.decode().then(triggerPrint).catch(() => {
-			// fall back to load event listener (already attached)
+			// load event listener will fire as fallback
 		});
 	}
 };
