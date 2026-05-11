@@ -47,6 +47,15 @@
 			category: 'activities'
 		},
 		{
+			id: 'cards',
+			title: 'CARDS',
+			description: 'Make a birthday, holiday, or thank-you card for someone you love.',
+			emoji: '💌',
+			href: '/activities/cards',
+			accent: 'var(--rp-rose)',
+			category: 'activities'
+		},
+		{
 			id: 'adventure',
 			title: 'ADVENTURE',
 			description: 'Choose your hero. Walk a kind path.',
