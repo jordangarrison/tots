@@ -140,7 +140,7 @@ const drawBackCoverSignature = (
 	if (!signature.trim()) return;
 	ctx.save();
 	ctx.fillStyle = '#666';
-	ctx.font = "32px 'Patrick Hand', 'Comic Sans MS', cursive";
+	ctx.font = "36px 'Schoolbell', 'Comic Sans MS', cursive";
 	ctx.textAlign = 'center';
 	ctx.textBaseline = 'middle';
 	ctx.fillText(`made with ♥ by ${signature}`, dx + dw / 2, dy + dh - 120);

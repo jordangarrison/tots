@@ -153,7 +153,7 @@
 	const rasterTextSlot = (ctx: CanvasRenderingContext2D, slot: TextSlot, text: string) => {
 		if (!text) return;
 		const fontSize = slot.fontSize ?? 48;
-		const fontFamily = slot.fontFamily ?? "'Patrick Hand', 'Comic Sans MS', cursive";
+		const fontFamily = slot.fontFamily ?? "'Schoolbell', 'Comic Sans MS', cursive";
 		const align = slot.align ?? 'center';
 		ctx.save();
 		ctx.fillStyle = slot.color ?? '#1a1a1a';
@@ -516,7 +516,7 @@
 								--slot-font-size: {((slot.fontSize ?? 48) / height) * 100}cqh;
 								--slot-color: {slot.color ?? '#1a1a1a'};
 								--slot-align: {slot.align ?? 'center'};
-								--slot-font-family: {slot.fontFamily ?? "'Patrick Hand', 'Comic Sans MS', cursive"};
+								--slot-font-family: {slot.fontFamily ?? "'Schoolbell', 'Comic Sans MS', cursive"};
 							"
 						>
 							<div

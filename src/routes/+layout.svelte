@@ -22,7 +22,7 @@
 </div>
 
 <style>
-	@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap');
+	@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Schoolbell&family=VT323&display=swap');
 
 	:global(:root) {
 		--rp-base: #191724;
