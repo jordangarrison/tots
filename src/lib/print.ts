@@ -174,8 +174,8 @@ export const printCardFold = (
 	ctx1.fillRect(0, 0, PAGE_W, PAGE_H);
 
 	const halfW = PAGE_W / 2;
-	drawFit(ctx1, frontCanvas, 0, 0, halfW, PAGE_H);
-	drawBackCoverSignature(ctx1, signature, halfW, 0, halfW, PAGE_H);
+	drawBackCoverSignature(ctx1, signature, 0, 0, halfW, PAGE_H);
+	drawFit(ctx1, frontCanvas, halfW, 0, halfW, PAGE_H);
 	drawFoldGuide(ctx1, halfW, PAGE_H);
 
 	const page2 = document.createElement('canvas');
@@ -338,7 +338,7 @@ export const printCardFold = (
 		<li>In the print dialog, set <strong>Orientation</strong> to <strong>Landscape</strong> and <strong>Paper size</strong> to <strong>Letter</strong>. For a cleaner print, open <em>More settings</em> and uncheck <strong>Headers and footers</strong> so the URL doesn't show up on the card.</li>
 		<li><strong>Easiest:</strong> Print both pages on separate sheets, then glue or tape them back-to-back with the printed sides facing out. Fold in half along the dotted line.</li>
 		<li><strong>Double-sided printer:</strong> Set <em>Print on both sides</em> with <em>Flip on short edge</em>, then fold in half.</li>
-		<li>The cover is on the left of Page 1. Fold so the cover ends up on top.</li>
+		<li>The cover is on the <strong>right</strong> of Page 1. Fold the left half <em>behind</em> the right half so the cover ends up on top.</li>
 	</ol>
 </div>
 <div class="preview">
