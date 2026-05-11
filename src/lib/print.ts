@@ -212,7 +212,7 @@ export const printCardFold = (
 <meta charset="utf-8" />
 <title>${safeTitle}</title>
 <style>
-	@page { size: 11in 8.5in; margin: 0; }
+	@page { size: 11in 8.5in; margin: 0.4in; }
 
 	html, body {
 		margin: 0;
@@ -300,14 +300,12 @@ export const printCardFold = (
 			margin: 0;
 			padding: 0;
 			background: #ffffff;
-			width: 11in;
-			height: 8.5in;
 		}
 		.bar, .steps, .preview { display: none !important; }
 		.print-page {
 			display: block;
-			width: 11in;
-			height: 8.5in;
+			width: 10.2in;
+			height: 7.7in;
 			margin: 0;
 			padding: 0;
 			overflow: hidden;
@@ -320,8 +318,8 @@ export const printCardFold = (
 		}
 		.print-page img {
 			display: block;
-			width: 11in;
-			height: 8.5in;
+			width: 10.2in;
+			height: 7.7in;
 			margin: 0;
 			padding: 0;
 			object-fit: contain;
@@ -337,7 +335,7 @@ export const printCardFold = (
 <div class="steps">
 	<h2>How to print your card</h2>
 	<ol>
-		<li>In the print dialog, set <strong>Orientation</strong> to <strong>Landscape</strong> and <strong>Paper size</strong> to <strong>Letter</strong>.</li>
+		<li>In the print dialog, set <strong>Orientation</strong> to <strong>Landscape</strong> and <strong>Paper size</strong> to <strong>Letter</strong>. For a cleaner print, open <em>More settings</em> and uncheck <strong>Headers and footers</strong> so the URL doesn't show up on the card.</li>
 		<li><strong>Easiest:</strong> Print both pages on separate sheets, then glue or tape them back-to-back with the printed sides facing out. Fold in half along the dotted line.</li>
 		<li><strong>Double-sided printer:</strong> Set <em>Print on both sides</em> with <em>Flip on short edge</em>, then fold in half.</li>
 		<li>The cover is on the left of Page 1. Fold so the cover ends up on top.</li>
