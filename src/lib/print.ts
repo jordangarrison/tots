@@ -212,13 +212,15 @@ export const printCardFold = (
 <meta charset="utf-8" />
 <title>${safeTitle}</title>
 <style>
-	@page { size: letter landscape; margin: 0; }
+	@page { size: 11in 8.5in; margin: 0; }
+
 	html, body {
 		margin: 0;
 		padding: 0;
 		background: #f4f4f5;
 		font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 	}
+
 	.bar {
 		position: sticky;
 		top: 0;
@@ -248,6 +250,7 @@ export const printCardFold = (
 		font-weight: 400;
 	}
 	.bar button:hover { filter: brightness(0.95); }
+
 	.steps {
 		max-width: 900px;
 		margin: 16px auto;
@@ -262,55 +265,65 @@ export const printCardFold = (
 	.steps h2 { margin: 0 0 8px; font-size: 16px; color: #9a3412; }
 	.steps ol { margin: 0; padding-left: 20px; }
 	.steps li { margin: 4px 0; }
-	.pages {
+	.steps strong { color: #9a3412; }
+
+	.preview {
 		display: flex;
 		flex-direction: column;
 		align-items: center;
-		gap: 16px;
+		gap: 20px;
 		padding: 16px;
 	}
-	.page {
-		background: #ffffff;
-		box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-		max-width: 100%;
-	}
-	.page img {
-		display: block;
+	.preview-card {
+		max-width: 1100px;
 		width: 100%;
-		height: auto;
-		max-width: 1100px;
 	}
-	.page-label {
-		max-width: 1100px;
-		margin: 0 auto;
+	.preview-label {
 		padding: 4px 8px;
 		font-size: 12px;
 		color: #52525b;
 		text-transform: uppercase;
 		letter-spacing: 0.1em;
 	}
+	.preview-card img {
+		display: block;
+		width: 100%;
+		height: auto;
+		background: #ffffff;
+		box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+	}
+
+	.print-page { display: none; }
+
 	@media print {
-		.bar, .steps, .page-label { display: none; }
-		body { background: #ffffff; }
-		.pages { padding: 0; gap: 0; }
-		.page {
-			box-shadow: none;
+		html, body {
+			margin: 0;
+			padding: 0;
+			background: #ffffff;
+			width: 11in;
+			height: 8.5in;
+		}
+		.bar, .steps, .preview { display: none !important; }
+		.print-page {
+			display: block;
+			width: 11in;
+			height: 8.5in;
+			margin: 0;
+			padding: 0;
+			overflow: hidden;
 			page-break-after: always;
 			break-after: page;
-			width: 100%;
-			height: 100vh;
-			display: flex;
-			align-items: center;
-			justify-content: center;
 		}
-		.page:last-child {
+		.print-page:last-of-type {
 			page-break-after: auto;
 			break-after: auto;
 		}
-		.page img {
-			width: 100%;
-			height: 100%;
-			max-width: none;
+		.print-page img {
+			display: block;
+			width: 11in;
+			height: 8.5in;
+			margin: 0;
+			padding: 0;
 			object-fit: contain;
 		}
 	}
@@ -324,21 +337,24 @@ export const printCardFold = (
 <div class="steps">
 	<h2>How to print your card</h2>
 	<ol>
+		<li>In the print dialog, set <strong>Orientation</strong> to <strong>Landscape</strong> and <strong>Paper size</strong> to <strong>Letter</strong>.</li>
 		<li><strong>Easiest:</strong> Print both pages on separate sheets, then glue or tape them back-to-back with the printed sides facing out. Fold in half along the dotted line.</li>
-		<li><strong>Double-sided printer:</strong> In your print dialog choose <em>Print on both sides</em> with <em>Flip on short edge</em>. Then fold in half along the dotted line.</li>
+		<li><strong>Double-sided printer:</strong> Set <em>Print on both sides</em> with <em>Flip on short edge</em>, then fold in half.</li>
 		<li>The cover is on the left of Page 1. Fold so the cover ends up on top.</li>
 	</ol>
 </div>
-<div class="pages">
-	<div>
-		<div class="page-label">Page 1 — Outside (cover &amp; back)</div>
-		<div class="page"><img src="${page1Url}" alt="Card outside" /></div>
+<div class="preview">
+	<div class="preview-card">
+		<div class="preview-label">Page 1 — Outside (cover &amp; back)</div>
+		<img src="${page1Url}" alt="Card outside" />
 	</div>
-	<div>
-		<div class="page-label">Page 2 — Inside</div>
-		<div class="page"><img src="${page2Url}" alt="Card inside" /></div>
+	<div class="preview-card">
+		<div class="preview-label">Page 2 — Inside</div>
+		<img src="${page2Url}" alt="Card inside" />
 	</div>
 </div>
+<div class="print-page"><img src="${page1Url}" alt="" /></div>
+<div class="print-page"><img src="${page2Url}" alt="" /></div>
 <script>
 	(function () {
 		var printBtn = document.getElementById('print-btn');
