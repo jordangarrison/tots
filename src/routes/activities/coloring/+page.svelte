@@ -2,6 +2,7 @@
 	import CreativeCanvas from '$lib/canvas/CreativeCanvas.svelte';
 	import { templates, type ColoringTemplate } from '$lib/coloring/templates';
 	import { printCanvas } from '$lib/print';
+	import { saveImage } from '$lib/save';
 
 	export const prerender = true;
 
@@ -56,15 +57,7 @@
 	const handleSave = async () => {
 		const out = await canvas?.composite();
 		if (!out) return;
-		out.toBlob((blob) => {
-			if (!blob) return;
-			const url = URL.createObjectURL(blob);
-			const a = document.createElement('a');
-			a.href = url;
-			a.download = `coloring-${Date.now()}.png`;
-			a.click();
-			URL.revokeObjectURL(url);
-		}, 'image/png');
+		await saveImage(out, { baseName: `coloring-${Date.now()}` });
 	};
 
 	const initialTemplate = templates.find((t) => t.id === activeTemplateId) ?? templates[0];
