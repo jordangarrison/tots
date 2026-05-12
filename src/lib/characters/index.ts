@@ -47,3 +47,5 @@ export const characters: Record<CharacterId, Character> = {
 };
 
 export const characterOrder: CharacterId[] = ['jane', 'isla', 'ollie'];
+
+export type { Character, CharacterId, Pronouns } from './types';

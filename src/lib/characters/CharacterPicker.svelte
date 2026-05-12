@@ -1,15 +1,16 @@
 <script lang="ts">
-	import { characters, characterOrder } from '$lib/adventure/characters';
-	import type { CharacterId } from '$lib/adventure/types';
+	import { characters, characterOrder } from '$lib/characters';
+	import type { CharacterId } from '$lib/characters';
 
 	export let onPick: (id: CharacterId) => void;
 	export let onBack: () => void;
+	export let prompt = 'WHO ARE YOU PLAYING AS?';
 </script>
 
 <div class="picker">
 	<h2 class="prompt">
 		<span class="prompt-bracket">►</span>
-		WHO'S COMING ON THE ADVENTURE?
+		{prompt}
 		<span class="prompt-cursor">_</span>
 	</h2>
 

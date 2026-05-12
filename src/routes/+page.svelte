@@ -63,6 +63,15 @@
 			href: '/games/adventure',
 			accent: 'var(--rp-love)',
 			category: 'games'
+		},
+		{
+			id: 'kingdom',
+			title: 'KINGDOM',
+			description: "Jane, Isla, and Ollie's cozy little kingdom. Plant roses. Say hi.",
+			emoji: '🌷',
+			href: '/games/kingdom',
+			accent: 'var(--rp-foam)',
+			category: 'games'
 		}
 	];
 
