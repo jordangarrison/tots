@@ -22,8 +22,11 @@
 		[196, 167, 231], // Iris
 	];
 
-	// Rose Pine surface — drawing canvas background
-	const canvasBg: [number, number, number] = [31, 29, 46];
+	// Rose Pine surface (dark) and Rose Pine dawn base (light) for the canvas.
+	const darkBg: [number, number, number] = [31, 29, 46];
+	const lightBg: [number, number, number] = [250, 244, 237];
+	let darkMode = true;
+	$: bgColor = darkMode ? darkBg : lightBg;
 
 	// Shape types
 	const shapeTypes = ['circle', 'star', 'heart', 'triangle', 'square', 'diamond'];
@@ -66,6 +69,7 @@
 	let shapes: DrawnShape[] = [];
 	let trail: TrailPoint[] = [];
 	let colorIndex = 0;
+	let redrawCanvas: () => void = () => {};
 
 	// Calculate canvas size based on container
 	const getCanvasSize = () => {
@@ -83,7 +87,7 @@
 		p5.setup = () => {
 			const size = getCanvasSize();
 			p5.createCanvas(size.width, size.height);
-			p5.background(canvasBg[0], canvasBg[1], canvasBg[2]);
+			p5.background(bgColor[0], bgColor[1], bgColor[2]);
 			p5.noStroke();
 		};
 
@@ -166,6 +170,28 @@
 			}
 		};
 
+		// Repaint the background and replay every committed shape. Used when
+		// toggling light/dark so existing artwork stays put.
+		redrawCanvas = () => {
+			p5.background(bgColor[0], bgColor[1], bgColor[2]);
+			p5.noStroke();
+			for (const shape of shapes) {
+				for (let i = 3; i > 0; i--) {
+					p5.fill(shape.color[0], shape.color[1], shape.color[2], 50);
+					drawShapeByType(shape.type, shape.x, shape.y, shape.size + i * 10);
+				}
+				p5.fill(shape.color[0], shape.color[1], shape.color[2]);
+				drawShapeByType(shape.type, shape.x, shape.y, shape.size);
+				p5.fill(255, 255, 255, 100);
+				drawShapeByType(
+					shape.type,
+					shape.x - shape.size * 0.1,
+					shape.y - shape.size * 0.1,
+					shape.size * 0.3
+				);
+			}
+		};
+
 		p5.keyPressed = () => {
 			let keyIndex = -1;
 			if (p5.key >= 'a' && p5.key <= 'z') {
@@ -200,7 +226,7 @@
 				// Create confetti for each shape before clearing
 				shapes.forEach(s => createConfetti(s.x, s.y, 10));
 				shapes = [];
-				p5.background(canvasBg[0], canvasBg[1], canvasBg[2]);
+				p5.background(bgColor[0], bgColor[1], bgColor[2]);
 				return false;
 			}
 
@@ -396,6 +422,11 @@
 		if (!canvas) return;
 		await saveImage(canvas, { baseName: `drawing-${Date.now()}` });
 	};
+
+	const toggleBackground = () => {
+		darkMode = !darkMode;
+		redrawCanvas();
+	};
 </script>
 
 <div class="game-container">
@@ -408,6 +439,17 @@
 		<span class="hint"><kbd>SPC</kbd> blast</span>
 		<span class="hint"><kbd>CLK</kbd> shape</span>
 		<span class="sep">|</span>
+		<button
+			type="button"
+			class="bg-btn"
+			on:click={toggleBackground}
+			aria-pressed={!darkMode}
+			title={darkMode
+				? 'Switch to a light background (better for printing)'
+				: 'Switch to a dark background'}
+		>
+			{darkMode ? '☀ LIGHT BG' : '🌙 DARK BG'}
+		</button>
 		<button type="button" class="print-btn" on:click={printDrawing} title="Print this drawing">
 			🖨 PRINT
 		</button>
@@ -481,6 +523,28 @@
 
 	.back-link:hover,
 	.back-link:focus-visible {
+		background: var(--rp-gold);
+		color: var(--rp-base);
+		text-shadow: none;
+		outline: none;
+	}
+
+	.bg-btn {
+		font-family: inherit;
+		font-size: inherit;
+		letter-spacing: inherit;
+		color: var(--rp-gold);
+		background: transparent;
+		text-shadow: 0 0 6px var(--rp-gold);
+		padding: 0.25rem 0.5rem;
+		border: 2px solid var(--rp-gold);
+		border-radius: 3px;
+		cursor: pointer;
+		transition: background 0.15s, color 0.15s;
+	}
+
+	.bg-btn:hover,
+	.bg-btn:focus-visible {
 		background: var(--rp-gold);
 		color: var(--rp-base);
 		text-shadow: none;
