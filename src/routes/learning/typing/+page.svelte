@@ -11,7 +11,10 @@
 		top: 'TOP ROW',
 		bottom: 'BOTTOM ROW',
 		space: 'SPACE',
-		words: 'WORDS'
+		words: 'WORDS',
+		numbers: 'NUMBERS',
+		punctuation: 'PUNCTUATION',
+		caps: 'BIG LETTERS'
 	};
 
 	const tierAccents: Record<Lesson['tier'], string> = {
@@ -19,10 +22,22 @@
 		top: 'var(--rp-iris)',
 		bottom: 'var(--rp-rose)',
 		space: 'var(--rp-gold)',
-		words: 'var(--rp-love)'
+		words: 'var(--rp-love)',
+		numbers: 'var(--rp-pine)',
+		punctuation: 'var(--rp-iris)',
+		caps: 'var(--rp-rose)'
 	};
 
-	const tierOrder: Lesson['tier'][] = ['home', 'top', 'bottom', 'space', 'words'];
+	const tierOrder: Lesson['tier'][] = [
+		'home',
+		'top',
+		'bottom',
+		'space',
+		'words',
+		'numbers',
+		'caps',
+		'punctuation'
+	];
 
 	$: groups = tierOrder
 		.map((tier) => ({
@@ -38,9 +53,10 @@
 		save = loadProgress();
 	});
 
-	function starsFor(id: string): number {
-		return save.completed[id]?.stars ?? 0;
-	}
+	// Reactive: re-derive starsFor whenever `save` is reassigned so the template
+	// re-renders. A plain `function starsFor()` wouldn't trigger reactivity because
+	// Svelte can't see that it reads `save`.
+	$: starsFor = (id: string) => save.completed[id]?.stars ?? 0;
 </script>
 
 <svelte:head>

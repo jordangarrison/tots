@@ -18,16 +18,20 @@ export interface Finger {
 }
 
 export interface KeyDef {
-	/** Lowercase character the key produces (or " " for space). */
+	/** Lowercase character the key produces (or " " for space, or "shift-l"/"shift-r" for modifiers). */
 	char: string;
 	/** Display glyph for the key cap. */
 	label: string;
 	/** Which finger should press this key. */
 	finger: Finger;
-	/** Visual row index (0 = numbers, 1 = top, 2 = home, 3 = bottom, 4 = space). */
+	/** Visual row index (0 = numbers, 1 = top, 2 = home, 3 = bottom + shift, 4 = space). */
 	row: 0 | 1 | 2 | 3 | 4;
 	/** Used to draw the bump indicator on F and J. */
 	homeAnchor?: boolean;
+	/** True for modifier keys (Shift) — drawn on the keyboard but not a typeable char. */
+	isModifier?: boolean;
+	/** True for the wide space bar — rendered specially. */
+	isWide?: boolean;
 }
 
 export type DrillKind = 'keys' | 'words';
@@ -50,7 +54,7 @@ export interface Lesson {
 	/** Keys reviewed alongside the new ones. */
 	reviewKeys: string[];
 	/** Difficulty tier for sorting / picker labels. */
-	tier: 'home' | 'top' | 'bottom' | 'words' | 'space';
+	tier: 'home' | 'top' | 'bottom' | 'words' | 'space' | 'numbers' | 'punctuation' | 'caps';
 	drills: Drill[];
 }
 

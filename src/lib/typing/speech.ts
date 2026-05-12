@@ -2,13 +2,17 @@
 // letters and words out loud — critical for pre-reading kids. Everything
 // silently no-ops when the API is unavailable (older browsers, SSR).
 //
-// Browsers gate speechSynthesis behind a user gesture. We wait until the
-// learner has touched a key (or pressed START) before speaking.
+// Browser autoplay rules require that the FIRST speech call happen inside a
+// user-gesture handler (click / keydown). We therefore:
+//   • never speak from onMount / setTimeout / promise continuations,
+//   • call unlockSpeech() at the start of every gesture handler before speak(),
+//   • keep the speak() function fully synchronous so the call stays inside
+//     the gesture.
+//
+// We deliberately do NOT await `voiceschanged`. Browsers play with the default
+// voice if none is selected, which is fine — the audio still happens.
 
 const SETTINGS_KEY = 'tots.typing.audio.v1';
-
-let unlocked = false;
-let voicesReady = false;
 
 function isSupported(): boolean {
 	return typeof window !== 'undefined' && 'speechSynthesis' in window;
@@ -35,12 +39,16 @@ export function setAudioEnabled(on: boolean): void {
 	if (!on && isSupported()) window.speechSynthesis.cancel();
 }
 
-/** Call from a click/keydown handler to unlock speech on iOS/Safari. */
+let unlocked = false;
+
+/** Call from a keydown/click handler to unlock speech on Safari/Chrome. */
 export function unlockSpeech(): void {
 	if (!isSupported() || unlocked) return;
-	const u = new SpeechSynthesisUtterance(' ');
-	u.volume = 0;
 	try {
+		// Some browsers leave the engine in a paused state until you nudge it.
+		window.speechSynthesis.resume();
+		const u = new SpeechSynthesisUtterance(' ');
+		u.volume = 0;
 		window.speechSynthesis.speak(u);
 		unlocked = true;
 	} catch {
@@ -52,13 +60,11 @@ function pickVoice(): SpeechSynthesisVoice | null {
 	if (!isSupported()) return null;
 	const voices = window.speechSynthesis.getVoices();
 	if (!voices.length) return null;
-	// Prefer a friendly child-leaning English voice if available.
 	const preferred = [
 		/karen/i,
 		/samantha/i,
 		/victoria/i,
 		/allison/i,
-		/susan/i,
 		/google us english/i,
 		/microsoft (zira|aria|jenny)/i
 	];
@@ -69,29 +75,6 @@ function pickVoice(): SpeechSynthesisVoice | null {
 	return voices.find((v) => v.lang.startsWith('en')) ?? voices[0];
 }
 
-function ensureVoicesReady(): Promise<void> {
-	if (!isSupported() || voicesReady) return Promise.resolve();
-	const synth = window.speechSynthesis;
-	if (synth.getVoices().length) {
-		voicesReady = true;
-		return Promise.resolve();
-	}
-	return new Promise((resolve) => {
-		const onChange = () => {
-			voicesReady = true;
-			synth.removeEventListener('voiceschanged', onChange);
-			resolve();
-		};
-		synth.addEventListener('voiceschanged', onChange);
-		// Some browsers (Chrome) fire voiceschanged late or not at all on first call;
-		// resolve after a short timeout so we don't block forever.
-		setTimeout(() => {
-			voicesReady = true;
-			resolve();
-		}, 250);
-	});
-}
-
 interface SpeakOptions {
 	rate?: number;
 	pitch?: number;
@@ -99,34 +82,68 @@ interface SpeakOptions {
 	queue?: boolean;
 }
 
+/** Synchronously speak text. Must be called from a user gesture handler. */
 export function speak(text: string, opts: SpeakOptions = {}): void {
-	if (!isSupported() || !audioEnabled()) return;
-	const synth = window.speechSynthesis;
-	if (!opts.queue) synth.cancel();
-	void ensureVoicesReady().then(() => {
+	if (!isSupported() || !audioEnabled() || !text) return;
+	try {
+		const synth = window.speechSynthesis;
+		if (!opts.queue) synth.cancel();
+		// Chrome sometimes leaves the queue paused after cancel(); resume() is harmless.
+		synth.resume();
 		const u = new SpeechSynthesisUtterance(text);
 		u.rate = opts.rate ?? 0.95;
 		u.pitch = opts.pitch ?? 1.15;
+		u.volume = 1;
 		const voice = pickVoice();
 		if (voice) u.voice = voice;
-		try {
-			synth.speak(u);
-		} catch {
-			// noop
-		}
-	});
+		synth.speak(u);
+	} catch {
+		// noop
+	}
 }
 
-/** Reads a single character. Letters get just their name; punctuation gets a kid-friendly label. */
+/** Reads a single character. Letters get their name; punctuation gets a kid-friendly label. */
 export function speakChar(char: string): void {
-	const c = char.toLowerCase();
 	let phrase: string;
-	if (c === ' ') phrase = 'space';
-	else if (c === ';') phrase = 'semicolon';
-	else if (c === '/') phrase = 'slash';
-	else if (c === '.') phrase = 'dot';
-	else if (c === ',') phrase = 'comma';
-	else if (/[a-z]/.test(c)) phrase = c.toUpperCase();
-	else phrase = char;
+	switch (char) {
+		case ' ':
+			phrase = 'space';
+			break;
+		case ';':
+			phrase = 'semicolon';
+			break;
+		case ':':
+			phrase = 'colon';
+			break;
+		case '/':
+			phrase = 'slash';
+			break;
+		case '?':
+			phrase = 'question mark';
+			break;
+		case '.':
+			phrase = 'dot';
+			break;
+		case ',':
+			phrase = 'comma';
+			break;
+		case '!':
+			phrase = 'exclamation';
+			break;
+		case "'":
+			phrase = 'apostrophe';
+			break;
+		case '"':
+			phrase = 'quote';
+			break;
+		default:
+			if (/[0-9]/.test(char)) phrase = char;
+			else if (/[a-z]/i.test(char))
+				phrase =
+					char === char.toUpperCase() && char !== char.toLowerCase()
+						? `capital ${char.toUpperCase()}`
+						: char.toUpperCase();
+			else phrase = char;
+	}
 	speak(phrase, { rate: 0.9, pitch: 1.2 });
 }

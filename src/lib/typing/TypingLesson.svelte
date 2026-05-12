@@ -2,7 +2,7 @@
 	import { onMount, onDestroy, createEventDispatcher, tick } from 'svelte';
 	import KeyboardDisplay from './KeyboardDisplay.svelte';
 	import HandsDisplay from './HandsDisplay.svelte';
-	import { fingerFor } from './fingerMap';
+	import { fingerFor, needsShift, shiftFingerFor } from './fingerMap';
 	import { recordResult } from './save';
 	import { speak, speakChar, audioEnabled, setAudioEnabled, unlockSpeech } from './speech';
 	import { assocFor } from './letterAssoc';
@@ -34,6 +34,8 @@
 
 	$: currentChar = targets[cursor] ?? null;
 	$: currentFinger = currentChar ? fingerFor(currentChar) : undefined;
+	$: shiftFinger = currentChar && needsShift(currentChar) ? shiftFingerFor(currentChar) : undefined;
+	$: assoc = currentChar ? assocFor(currentChar) : undefined;
 
 	const cheers = ['Nice!', 'You got it!', 'Wow!', 'Great!', 'Yes!', 'Cool!', 'Wow wow wow!'];
 	function celebrate() {
@@ -49,6 +51,8 @@
 			dispatch('exit');
 			return;
 		}
+		// Allow Shift (modifier) to pass through — kid is composing a shifted char.
+		// Block real browser shortcuts though.
 		if (e.metaKey || e.ctrlKey || e.altKey) return;
 
 		const expected = currentChar;
@@ -56,25 +60,45 @@
 
 		let pressed: string;
 		if (e.key === ' ' || e.key === 'Spacebar') pressed = ' ';
-		else if (e.key.length === 1) pressed = e.key.toLowerCase();
+		else if (e.key.length === 1) pressed = e.key;
 		else return;
 
 		e.preventDefault();
 		unlockSpeech();
+
+		// Shifted targets compare case-sensitively. Unshifted targets are
+		// forgiving — accept caps lock / accidental shift too.
+		const expectShifted = needsShift(expected);
+		const pressedNorm = expectShifted ? pressed : pressed.toLowerCase();
+		const expectedNorm = expectShifted ? expected : expected.toLowerCase();
+		const correct = pressedNorm === expectedNorm;
+
 		totalKeys++;
-		const correct = pressed === expected;
-		lastPressed = { char: pressed, correct, nonce: (lastPressed?.nonce ?? 0) + 1 };
+		lastPressed = {
+			char: expectShifted ? pressed : pressedNorm,
+			correct,
+			nonce: (lastPressed?.nonce ?? 0) + 1
+		};
 
 		if (correct) {
 			cursor++;
 			mistakeOnCurrent = false;
+			targetNonce++;
 			if (cursor > 0 && cursor % 10 === 0) celebrate();
-			if (cursor >= targets.length) finishLesson();
+			if (cursor >= targets.length) {
+				finishLesson();
+			} else {
+				// Speak the NEW target (we're inside a gesture, so this works).
+				const nextChar = targets[cursor];
+				if (nextChar) speakChar(nextChar);
+			}
 		} else {
 			if (!mistakeOnCurrent) {
 				mistakes++;
 				mistakeOnCurrent = true;
 			}
+			// Re-speak the current target to help.
+			speakChar(expected);
 		}
 	}
 
@@ -84,7 +108,7 @@
 		result = { lessonId: lesson.id, stars, accuracy, totalKeys, mistakes };
 		recordResult(result);
 		done = true;
-		speak(`Lesson complete. You got ${stars} stars!`);
+		speak(`You got ${stars} star${stars === 1 ? '' : 's'}!`);
 		dispatch('done', result);
 	}
 
@@ -97,25 +121,16 @@
 		done = false;
 		result = null;
 		cheer = '';
-		speak(`Let's try ${lesson.title} again!`);
+		targetNonce++;
 	}
 
 	function toggleAudio() {
 		audioOn = !audioOn;
 		setAudioEnabled(audioOn);
-		if (audioOn) speak('audio on');
-	}
-
-	// Speak the new target whenever the cursor advances. The targetNonce keeps the
-	// reactive block in sync without firing on unrelated state changes.
-	$: speakTarget(cursor, currentChar);
-	let lastSpokenAt = -1;
-	function speakTarget(c: number, ch: string | null) {
-		if (done || ch === null) return;
-		if (c === lastSpokenAt) return;
-		lastSpokenAt = c;
-		speakChar(ch);
-		targetNonce++;
+		if (audioOn) {
+			unlockSpeech();
+			if (currentChar) speakChar(currentChar);
+		}
 	}
 
 	$: cursor, void scrollCursor();
@@ -127,14 +142,17 @@
 	onMount(() => {
 		audioOn = audioEnabled();
 		window.addEventListener('keydown', handleKey);
-		// Defer first utterance slightly so the lesson can paint before TTS starts.
-		window.setTimeout(() => speak(lesson.title), 200);
 	});
 	onDestroy(() => {
 		if (typeof window !== 'undefined') window.removeEventListener('keydown', handleKey);
 	});
 
-	$: assoc = currentChar ? assocFor(currentChar) : undefined;
+	// Display helpers
+	function displayGlyph(c: string | null): string {
+		if (c === null) return '';
+		if (c === ' ') return '␣';
+		return c;
+	}
 </script>
 
 <div class="lesson">
@@ -169,8 +187,12 @@
 			{#key targetNonce}
 				{#if currentChar && currentFinger}
 					<div class="bigkey" style="--c: {currentFinger.color};">
-						<span class="big-letter">{currentChar === ' ' ? '␣' : currentChar.toUpperCase()}</span>
-						{#if assoc}
+						{#if shiftFinger}
+							<span class="shift-badge" style="--sc: {shiftFinger.color};">⇧</span>
+							<span class="plus">+</span>
+						{/if}
+						<span class="big-letter">{displayGlyph(currentChar)}</span>
+						{#if assoc && !needsShift(currentChar)}
 							<span class="assoc" aria-hidden="true">
 								<span class="assoc-emoji">{assoc.emoji}</span>
 							</span>
@@ -199,7 +221,10 @@
 
 		<div class="visuals">
 			<KeyboardDisplay targetChar={currentChar} {lastPressed} />
-			<HandsDisplay activeFingerId={currentFinger?.id ?? null} />
+			<HandsDisplay
+				activeFingerId={currentFinger?.id ?? null}
+				secondaryFingerId={shiftFinger?.id ?? null}
+			/>
 		</div>
 	{:else if result}
 		<div class="finish">
@@ -331,7 +356,7 @@
 		--c: var(--rp-iris);
 		display: flex;
 		align-items: center;
-		gap: 0.8rem;
+		gap: 0.6rem;
 		animation: pop-in 0.4s ease-out;
 	}
 
@@ -348,6 +373,32 @@
 			transform: scale(1) rotate(0deg);
 			opacity: 1;
 		}
+	}
+
+	.shift-badge {
+		--sc: var(--rp-rose);
+		font-family: 'Press Start 2P', cursive;
+		font-size: 2.4rem;
+		color: var(--sc);
+		text-shadow: 0 0 10px var(--sc);
+		line-height: 1;
+		animation: shift-pulse 1s ease-in-out infinite;
+	}
+
+	@keyframes shift-pulse {
+		0%,
+		100% {
+			transform: scale(1);
+		}
+		50% {
+			transform: scale(1.08);
+		}
+	}
+
+	.plus {
+		font-family: 'Press Start 2P', cursive;
+		font-size: 1.6rem;
+		color: var(--rp-subtle);
 	}
 
 	.big-letter {

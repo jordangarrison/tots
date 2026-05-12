@@ -1,6 +1,5 @@
 <script lang="ts">
-	import { KEYBOARD_ROWS } from './fingerMap';
-	import type { KeyDef } from './types';
+	import { KEYBOARD_ROWS, baseChar, needsShift, shiftKeyIdFor } from './fingerMap';
 
 	export let targetChar: string | null = null;
 	/** Last key the user actually pressed, for the brief glow animation. */
@@ -8,30 +7,33 @@
 	/** When true, dim keys that aren't the current target — focuses attention. */
 	export let focusTarget = true;
 
-	$: target = targetChar?.toLowerCase() ?? null;
-
-	function isTarget(key: KeyDef): boolean {
-		return target !== null && key.char === target;
-	}
-
-	function isDimmed(key: KeyDef): boolean {
-		return focusTarget && target !== null && key.char !== target;
-	}
+	// The physical key under the (possibly shifted) target character.
+	$: targetKey = targetChar !== null ? baseChar(targetChar) : null;
+	$: shiftSide = targetChar !== null && needsShift(targetChar) ? shiftKeyIdFor(targetChar) : null;
+	// Reactive predicates so the template re-renders when their inputs change.
+	// (Plain `function isTarget(key)` does NOT re-evaluate when `target` changes —
+	// Svelte tracks variables in template expressions, not function bodies.)
+	$: isTarget = (char: string) => char === targetKey || (shiftSide !== null && char === shiftSide);
+	$: isDimmed = (char: string) => focusTarget && targetKey !== null && !isTarget(char);
+	$: lastNonce = lastPressed?.nonce ?? 0;
 </script>
 
 <div class="keyboard" aria-hidden="true">
 	{#each KEYBOARD_ROWS as row, rIdx (rIdx)}
-		<div class="row" class:space-row={rIdx === 3}>
+		<div class="row" data-row={row[0]?.row ?? rIdx}>
 			{#each row as key (key.char)}
-				{@const pressedNow = lastPressed && lastPressed.char === key.char}
+				{@const pressed = lastPressed && lastPressed.char === key.char ? lastPressed : null}
+				{@const t = isTarget(key.char)}
 				<div
 					class="key"
-					class:target={isTarget(key)}
-					class:dim={isDimmed(key)}
-					class:correct={pressedNow && lastPressed?.correct}
-					class:oops={pressedNow && !lastPressed?.correct}
-					class:wide={key.char === ' '}
+					class:target={t}
+					class:dim={isDimmed(key.char)}
+					class:correct={pressed && pressed.correct}
+					class:oops={pressed && !pressed.correct}
+					class:wide={key.isWide}
 					class:anchor={key.homeAnchor}
+					class:modifier={key.isModifier}
+					data-nonce={pressed ? lastNonce : ''}
 					style="--finger-color: {key.finger.color};"
 				>
 					<span class="cap">{key.label}</span>
@@ -48,9 +50,9 @@
 	.keyboard {
 		display: flex;
 		flex-direction: column;
-		gap: 0.4rem;
+		gap: 0.35rem;
 		align-items: center;
-		padding: 0.6rem;
+		padding: 0.5rem 0.6rem;
 		background: var(--rp-overlay);
 		border: 3px solid var(--rp-hl-med);
 		border-radius: 6px;
@@ -59,18 +61,20 @@
 
 	.row {
 		display: flex;
-		gap: 0.35rem;
+		gap: 0.3rem;
 	}
 
-	/* Slight stagger to evoke a real keyboard layout. */
-	.row:nth-child(2) {
-		padding-left: 1.2rem;
+	/* Real-keyboard stagger using the semantic row index (0..4). */
+	.row[data-row='1'] {
+		padding-left: 1rem;
 	}
-	.row:nth-child(3) {
-		padding-left: 2.4rem;
+	.row[data-row='2'] {
+		padding-left: 1.5rem;
 	}
-
-	.space-row {
+	.row[data-row='3'] {
+		padding-left: 0;
+	}
+	.row[data-row='4'] {
 		width: 100%;
 		justify-content: center;
 	}
@@ -78,8 +82,8 @@
 	.key {
 		--finger-color: var(--rp-iris);
 		position: relative;
-		min-width: 2.2rem;
-		height: 2.4rem;
+		min-width: 2rem;
+		height: 2.2rem;
 		display: flex;
 		align-items: center;
 		justify-content: center;
@@ -88,14 +92,23 @@
 		border-radius: 4px;
 		color: var(--rp-text);
 		font-family: 'Press Start 2P', cursive;
-		font-size: 0.75rem;
+		font-size: 0.7rem;
 		box-shadow: 0 2px 0 var(--rp-hl-low), inset 0 0 6px rgba(255, 255, 255, 0.04);
 		transition: transform 0.08s ease, box-shadow 0.12s ease, opacity 0.2s ease;
 	}
 
+	.key.modifier {
+		min-width: 3rem;
+		font-size: 1rem;
+		opacity: 0.55;
+	}
+	.key.modifier.target {
+		opacity: 1;
+	}
+
 	.key.wide {
-		min-width: 14rem;
-		height: 1.6rem;
+		min-width: 12rem;
+		height: 1.4rem;
 		font-size: 0.55rem;
 		letter-spacing: 0.3em;
 	}
@@ -105,7 +118,7 @@
 	}
 
 	.key.dim {
-		opacity: 0.32;
+		opacity: 0.3;
 	}
 
 	.key.target {

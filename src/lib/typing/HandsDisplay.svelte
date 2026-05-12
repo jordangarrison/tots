@@ -3,205 +3,216 @@
 	import type { Finger } from './types';
 
 	export let activeFingerId: string | null = null;
+	/** Optional second finger to highlight (used to show Shift). */
+	export let secondaryFingerId: string | null = null;
 
-	// Order fingers as they appear from left to right when looking down at
-	// your hands on the keyboard, palms down: left pinky → right pinky.
-	const leftHand: Finger[] = [
-		FINGERS.leftPinky,
-		FINGERS.leftRing,
-		FINGERS.leftMiddle,
-		FINGERS.leftIndex
-	];
-	const rightHand: Finger[] = [
-		FINGERS.rightIndex,
-		FINGERS.rightMiddle,
-		FINGERS.rightRing,
-		FINGERS.rightPinky
-	];
+	// Palm-down view, as a kid sees their own hands on the keyboard.
+	// Left hand: pinky on the left, thumb on the right (toward the middle).
+	// Right hand: mirrored. We hand-author both SVGs for clarity.
+	const L = FINGERS;
 
-	$: activeFinger = activeFingerId;
-
-	function isActive(f: Finger): boolean {
-		return activeFinger === f.id;
-	}
-
-	// Stagger the finger heights to look hand-shaped: pinky shortest,
-	// middle tallest. Heights are in em, indexed by FingerIndex order
-	// (1 index, 2 middle, 3 ring, 4 pinky).
-	function fingerHeight(f: Finger): string {
-		const heights: Record<number, string> = { 1: '3.6em', 2: '4.2em', 3: '3.8em', 4: '3em' };
-		return heights[f.index] ?? '3em';
-	}
+	// Reactive predicate — function declarations alone don't trigger template
+	// re-evaluation when their captured variables change.
+	$: isActive = (f: Finger) =>
+		activeFingerId === f.id || (secondaryFingerId !== null && secondaryFingerId === f.id);
 </script>
 
 <div class="hands-wrap">
 	<!-- LEFT HAND -->
-	<div class="hand left" class:any-active={activeFinger?.startsWith('L')}>
-		<div class="fingers">
-			{#each leftHand as f (f.id)}
-				<div
-					class="finger"
-					class:active={isActive(f)}
-					style="--c: {f.color}; height: {fingerHeight(f)};"
-				>
-					<span class="tip" />
-				</div>
-			{/each}
-		</div>
-		<div class="palm">
-			<span class="label">LEFT</span>
-			<div
-				class="thumb"
-				class:active={isActive(FINGERS.leftThumb)}
-				style="--c: {FINGERS.leftThumb.color};"
-			/>
-		</div>
-	</div>
+	<svg
+		class="hand"
+		viewBox="0 0 220 240"
+		preserveAspectRatio="xMidYEnd meet"
+		role="img"
+		aria-label="Left hand"
+	>
+		<!-- Palm (drawn first, fingers overlap on top) -->
+		<rect class="palm" x="20" y="130" width="160" height="100" rx="36" ry="36" />
 
-	<!-- RIGHT HAND -->
-	<div class="hand right" class:any-active={activeFinger?.startsWith('R')}>
-		<div class="fingers">
-			{#each rightHand as f (f.id)}
-				<div
-					class="finger"
-					class:active={isActive(f)}
-					style="--c: {f.color}; height: {fingerHeight(f)};"
-				>
-					<span class="tip" />
-				</div>
-			{/each}
-		</div>
-		<div class="palm">
-			<span class="label">RIGHT</span>
-			<div
-				class="thumb"
-				class:active={isActive(FINGERS.rightThumb)}
-				style="--c: {FINGERS.rightThumb.color};"
-			/>
-		</div>
-	</div>
+		<!-- Thumb pokes out to the right and angles upward, like a thumb-down view -->
+		<rect
+			class="finger thumb"
+			class:active={isActive(L.leftThumb)}
+			style="--c: {L.leftThumb.color};"
+			x="-14"
+			y="-38"
+			width="28"
+			height="76"
+			rx="14"
+			ry="14"
+			transform="translate(178 168) rotate(55)"
+		/>
+
+		<!-- Fingers from outside to inside: pinky, ring, middle, index -->
+		<rect
+			class="finger"
+			class:active={isActive(L.leftPinky)}
+			style="--c: {L.leftPinky.color};"
+			x="34"
+			y="60"
+			width="26"
+			height="82"
+			rx="13"
+		/>
+		<rect
+			class="finger"
+			class:active={isActive(L.leftRing)}
+			style="--c: {L.leftRing.color};"
+			x="66"
+			y="28"
+			width="28"
+			height="114"
+			rx="14"
+		/>
+		<rect
+			class="finger"
+			class:active={isActive(L.leftMiddle)}
+			style="--c: {L.leftMiddle.color};"
+			x="100"
+			y="14"
+			width="30"
+			height="128"
+			rx="15"
+		/>
+		<rect
+			class="finger"
+			class:active={isActive(L.leftIndex)}
+			style="--c: {L.leftIndex.color};"
+			x="136"
+			y="34"
+			width="28"
+			height="108"
+			rx="14"
+		/>
+
+		<text class="label" x="100" y="200" text-anchor="middle">LEFT</text>
+	</svg>
+
+	<!-- RIGHT HAND (mirrored layout) -->
+	<svg
+		class="hand"
+		viewBox="0 0 220 240"
+		preserveAspectRatio="xMidYEnd meet"
+		role="img"
+		aria-label="Right hand"
+	>
+		<rect class="palm" x="40" y="130" width="160" height="100" rx="36" ry="36" />
+
+		<!-- Thumb pokes out to the LEFT for the right hand -->
+		<rect
+			class="finger thumb"
+			class:active={isActive(L.rightThumb)}
+			style="--c: {L.rightThumb.color};"
+			x="-14"
+			y="-38"
+			width="28"
+			height="76"
+			rx="14"
+			ry="14"
+			transform="translate(42 168) rotate(-55)"
+		/>
+
+		<!-- Fingers inside to outside: index, middle, ring, pinky -->
+		<rect
+			class="finger"
+			class:active={isActive(L.rightIndex)}
+			style="--c: {L.rightIndex.color};"
+			x="56"
+			y="34"
+			width="28"
+			height="108"
+			rx="14"
+		/>
+		<rect
+			class="finger"
+			class:active={isActive(L.rightMiddle)}
+			style="--c: {L.rightMiddle.color};"
+			x="90"
+			y="14"
+			width="30"
+			height="128"
+			rx="15"
+		/>
+		<rect
+			class="finger"
+			class:active={isActive(L.rightRing)}
+			style="--c: {L.rightRing.color};"
+			x="126"
+			y="28"
+			width="28"
+			height="114"
+			rx="14"
+		/>
+		<rect
+			class="finger"
+			class:active={isActive(L.rightPinky)}
+			style="--c: {L.rightPinky.color};"
+			x="160"
+			y="60"
+			width="26"
+			height="82"
+			rx="13"
+		/>
+
+		<text class="label" x="120" y="200" text-anchor="middle">RIGHT</text>
+	</svg>
 </div>
 
 <style>
 	.hands-wrap {
 		display: flex;
 		justify-content: center;
-		gap: 1.8rem;
-		padding: 0.5rem 0.25rem 0;
+		align-items: flex-end;
+		gap: 0.4rem;
+		padding: 0.3rem 0.25rem 0;
 	}
 
 	.hand {
-		display: flex;
-		flex-direction: column;
-		align-items: center;
-		gap: 0.1rem;
-		position: relative;
+		width: 140px;
+		max-width: 36vw;
+		height: auto;
+		filter: drop-shadow(0 4px 0 rgba(0, 0, 0, 0.25));
 	}
 
-	.fingers {
-		display: flex;
-		align-items: flex-end;
-		gap: 0.35rem;
+	.palm {
+		fill: var(--rp-hl-med);
+		stroke: rgba(0, 0, 0, 0.35);
+		stroke-width: 2.5;
 	}
 
 	.finger {
-		width: 0.9em;
-		background: var(--c);
-		border: 2px solid rgba(0, 0, 0, 0.35);
-		border-radius: 999px 999px 4px 4px;
-		opacity: 0.45;
+		--c: var(--rp-iris);
+		fill: var(--c);
+		stroke: rgba(0, 0, 0, 0.35);
+		stroke-width: 2.5;
+		opacity: 0.42;
 		filter: saturate(0.7) brightness(0.85);
-		transform-origin: bottom center;
-		transition: opacity 0.2s ease, transform 0.18s ease, filter 0.18s ease;
-		position: relative;
+		transition: opacity 0.2s ease, filter 0.18s ease, transform 0.18s ease;
+		transform-box: fill-box;
+		transform-origin: center 95%;
 	}
 
 	.finger.active {
 		opacity: 1;
-		filter: saturate(1) brightness(1);
-		box-shadow: 0 0 12px var(--c), 0 0 24px var(--c);
-		animation: finger-wiggle 0.9s ease-in-out infinite;
+		filter: saturate(1) brightness(1) drop-shadow(0 0 6px var(--c)) drop-shadow(0 0 14px var(--c));
+		animation: wiggle 0.9s ease-in-out infinite;
 	}
 
-	.tip {
-		position: absolute;
-		top: 6px;
-		left: 50%;
-		transform: translateX(-50%);
-		width: 0.45em;
-		height: 0.18em;
-		border-radius: 999px;
-		background: rgba(255, 255, 255, 0.6);
-	}
-
-	.palm {
-		position: relative;
-		width: 5em;
-		height: 1.6em;
-		background: var(--rp-hl-med);
-		border: 2px solid rgba(0, 0, 0, 0.35);
-		border-radius: 0.6em;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		color: var(--rp-text);
-		font-family: 'Press Start 2P', cursive;
-		font-size: 0.45rem;
-		letter-spacing: 0.2em;
+	@keyframes wiggle {
+		0%,
+		100% {
+			transform: translateY(-3px) scale(1.03);
+		}
+		50% {
+			transform: translateY(-6px) scale(1.05) rotate(-1deg);
+		}
 	}
 
 	.label {
-		opacity: 0.85;
-	}
-
-	/* Thumb pokes out from the palm — to the right on the left hand, to the left on the right hand. */
-	.thumb {
-		position: absolute;
-		top: 50%;
-		width: 1.2em;
-		height: 0.9em;
-		background: var(--c);
-		border: 2px solid rgba(0, 0, 0, 0.35);
-		border-radius: 999px;
-		opacity: 0.45;
-		filter: saturate(0.7) brightness(0.85);
-		transition: opacity 0.2s ease, transform 0.18s ease, filter 0.18s ease;
-	}
-
-	.thumb.active {
-		opacity: 1;
-		filter: saturate(1) brightness(1);
-		box-shadow: 0 0 10px var(--c), 0 0 20px var(--c);
-		animation: thumb-glow 0.9s ease-in-out infinite;
-	}
-
-	.hand.left .thumb {
-		right: -0.7em;
-		transform: translateY(-50%) rotate(25deg);
-	}
-
-	.hand.right .thumb {
-		left: -0.7em;
-		transform: translateY(-50%) rotate(-25deg);
-	}
-
-	@keyframes finger-wiggle {
-		0%,
-		100% {
-			transform: translateY(-6px) scaleY(1.06) rotate(0deg);
-		}
-		50% {
-			transform: translateY(-10px) scaleY(1.1) rotate(-3deg);
-		}
-	}
-
-	@keyframes thumb-glow {
-		0%,
-		100% {
-			box-shadow: 0 0 10px var(--c), 0 0 20px var(--c);
-		}
-		50% {
-			box-shadow: 0 0 16px var(--c), 0 0 32px var(--c);
-		}
+		fill: var(--rp-text);
+		font-family: 'Press Start 2P', cursive;
+		font-size: 14px;
+		letter-spacing: 0.15em;
+		opacity: 0.7;
 	}
 </style>
