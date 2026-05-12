@@ -1,6 +1,6 @@
 import { characters } from '$lib/characters';
 import type { Character } from '$lib/characters';
-import type { AreaDef, Facing, PlotDef, PlotState, TileKind } from './types';
+import type { AreaDef, Facing, ItemId, PlacedDecor, PlotDef, PlotState, TileKind } from './types';
 
 export const TILE_PX = 36;
 
@@ -14,7 +14,11 @@ const COLOR: Record<TileKind, string> = {
 	lavender: '#7a5a9c',
 	tree: '#27543c',
 	stone: '#6e6a86',
-	'rose-plot': '#5a3a25'
+	'rose-plot': '#5a3a25',
+	'wood-floor': '#6b4a30',
+	bed: '#6b4a30',
+	hearth: '#3d3a52',
+	window: '#3d3a52'
 };
 
 const GRID_LINE = 'rgba(0,0,0,0.18)';
@@ -25,15 +29,24 @@ export function areaPixelSize(area: AreaDef): { w: number; h: number } {
 	return { w: area.width * TILE_PX, h: area.height * TILE_PX };
 }
 
+export interface PlaceCursor {
+	itemId: ItemId;
+	x: number;
+	y: number;
+	valid: boolean;
+}
+
 interface DrawArgs {
 	ctx: CanvasRenderingContext2D;
 	area: AreaDef;
 	plots: Record<string, PlotState>;
 	player: { x: number; y: number; facing: Facing; character: Character };
+	placedDecor: PlacedDecor[];
+	placeCursor: PlaceCursor | null;
 	now: number;
 }
 
-export function draw({ ctx, area, plots, player, now }: DrawArgs) {
+export function draw({ ctx, area, plots, player, placedDecor, placeCursor, now }: DrawArgs) {
 	const { w, h } = areaPixelSize(area);
 	ctx.fillStyle = '#191724';
 	ctx.fillRect(0, 0, w, h);
@@ -50,6 +63,11 @@ export function draw({ ctx, area, plots, player, now }: DrawArgs) {
 		drawPlot(ctx, plot, state);
 	}
 
+	for (const decor of placedDecor) {
+		if (decor.areaId !== area.id) continue;
+		drawDecor(ctx, decor.x, decor.y, decor.itemId);
+	}
+
 	for (const door of area.doors) {
 		drawDoor(ctx, door.x, door.y, !!door.comingSoon);
 	}
@@ -61,6 +79,10 @@ export function draw({ ctx, area, plots, player, now }: DrawArgs) {
 	}
 
 	drawCharacter(ctx, player.x, player.y, player.character.emoji, PLAYER_RING, player.facing);
+
+	if (placeCursor) {
+		drawPlaceCursor(ctx, placeCursor, now);
+	}
 }
 
 function drawTile(
@@ -134,11 +156,118 @@ function drawTile(
 			ctx.fillRect(px + 6, py + 24, 3, 4);
 			ctx.fillRect(px + 22, py + 8, 3, 4);
 			break;
+		case 'wood-floor':
+			// Plank seams.
+			ctx.fillStyle = 'rgba(0,0,0,0.18)';
+			ctx.fillRect(px, py + 9, TILE_PX, 1);
+			ctx.fillRect(px, py + 27, TILE_PX, 1);
+			ctx.fillStyle = 'rgba(255,255,255,0.04)';
+			ctx.fillRect(px + 4, py + 4, 8, 1);
+			ctx.fillRect(px + 22, py + 22, 8, 1);
+			break;
+		case 'bed':
+			// Quilt + pillow. Two-tile bed reads as one frame because adjacent tiles share style.
+			ctx.fillStyle = '#54486b'; // frame
+			ctx.fillRect(px + 2, py + 2, TILE_PX - 4, TILE_PX - 4);
+			ctx.fillStyle = '#9ccfd8'; // blanket
+			ctx.fillRect(px + 5, py + 8, TILE_PX - 10, TILE_PX - 12);
+			ctx.fillStyle = '#e0def4'; // pillow stripe
+			ctx.fillRect(px + 5, py + 5, TILE_PX - 10, 4);
+			ctx.fillStyle = 'rgba(0,0,0,0.25)';
+			ctx.fillRect(px + 5, py + 18, TILE_PX - 10, 2);
+			break;
+		case 'hearth': {
+			ctx.fillStyle = '#2a2738'; // hearth stones
+			ctx.fillRect(px + 2, py + 2, TILE_PX - 4, TILE_PX - 4);
+			ctx.fillStyle = '#6e6a86';
+			ctx.fillRect(px + 4, py + 4, 8, 6);
+			ctx.fillRect(px + 16, py + 4, 8, 6);
+			ctx.fillRect(px + 26, py + 4, 6, 6);
+			// Flame.
+			const flicker = Math.sin(now / 180) * 0.5 + 0.5;
+			ctx.fillStyle = '#eb6f92';
+			ctx.fillRect(px + 12, py + 16, 12, 14);
+			ctx.fillStyle = '#f6c177';
+			ctx.fillRect(px + 14, py + 18 + Math.floor(flicker * 2), 8, 10);
+			ctx.fillStyle = '#fff4cc';
+			ctx.fillRect(px + 16, py + 22 + Math.floor(flicker * 2), 4, 4);
+			break;
+		}
+		case 'window':
+			ctx.fillStyle = '#26233a';
+			ctx.fillRect(px + 2, py + 2, TILE_PX - 4, TILE_PX - 4);
+			ctx.fillStyle = '#9ccfd8'; // sky
+			ctx.fillRect(px + 6, py + 6, TILE_PX - 12, TILE_PX - 12);
+			ctx.fillStyle = '#26233a'; // mullions
+			ctx.fillRect(px + 6, py + TILE_PX / 2 - 1, TILE_PX - 12, 2);
+			ctx.fillRect(px + TILE_PX / 2 - 1, py + 6, 2, TILE_PX - 12);
+			break;
 	}
 
 	ctx.strokeStyle = GRID_LINE;
 	ctx.lineWidth = 1;
 	ctx.strokeRect(px + 0.5, py + 0.5, TILE_PX - 1, TILE_PX - 1);
+}
+
+function drawDecor(ctx: CanvasRenderingContext2D, x: number, y: number, itemId: ItemId) {
+	const px = x * TILE_PX;
+	const py = y * TILE_PX;
+	// Soft shadow under all decor.
+	ctx.fillStyle = 'rgba(0,0,0,0.28)';
+	ctx.beginPath();
+	ctx.ellipse(px + TILE_PX / 2, py + TILE_PX - 6, TILE_PX / 3, 3, 0, 0, Math.PI * 2);
+	ctx.fill();
+
+	switch (itemId) {
+		case 'rose':
+			ctx.fillStyle = '#3a8050';
+			ctx.fillRect(px + 16, py + 18, 4, 10);
+			ctx.fillStyle = '#eb6f92';
+			ctx.fillRect(px + 12, py + 8, 12, 12);
+			ctx.fillStyle = '#f6c177';
+			ctx.fillRect(px + 16, py + 12, 4, 4);
+			break;
+		case 'lavender':
+			ctx.fillStyle = '#3a8050';
+			ctx.fillRect(px + 10, py + 18, 2, 10);
+			ctx.fillRect(px + 18, py + 18, 2, 10);
+			ctx.fillRect(px + 26, py + 18, 2, 10);
+			ctx.fillStyle = '#c4a7e7';
+			ctx.fillRect(px + 8, py + 8, 6, 10);
+			ctx.fillRect(px + 16, py + 6, 6, 12);
+			ctx.fillRect(px + 24, py + 9, 6, 10);
+			ctx.fillStyle = '#e0def4';
+			ctx.fillRect(px + 10, py + 10, 2, 2);
+			ctx.fillRect(px + 18, py + 8, 2, 2);
+			ctx.fillRect(px + 26, py + 11, 2, 2);
+			break;
+		case 'fish':
+			ctx.fillStyle = '#9ccfd8';
+			ctx.fillRect(px + 8, py + 14, 16, 8);
+			ctx.fillRect(px + 24, py + 12, 2, 12);
+			ctx.fillRect(px + 26, py + 10, 2, 16);
+			ctx.fillStyle = '#3b6e8a';
+			ctx.fillRect(px + 10, py + 16, 2, 2); // eye outline
+			ctx.fillStyle = '#191724';
+			ctx.fillRect(px + 10, py + 17, 1, 1);
+			ctx.fillStyle = '#26233a';
+			ctx.fillRect(px + 14, py + 16, 4, 1);
+			break;
+	}
+}
+
+function drawPlaceCursor(ctx: CanvasRenderingContext2D, cursor: PlaceCursor, now: number) {
+	const px = cursor.x * TILE_PX;
+	const py = cursor.y * TILE_PX;
+	const pulse = (Math.sin(now / 220) + 1) / 2; // 0..1
+	const alpha = 0.55 + pulse * 0.35;
+	ctx.save();
+	ctx.globalAlpha = alpha;
+	drawDecor(ctx, cursor.x, cursor.y, cursor.itemId);
+	ctx.restore();
+	ctx.strokeStyle = cursor.valid ? '#9ccfd8' : '#eb6f92';
+	ctx.lineWidth = 2;
+	ctx.strokeRect(px + 2, py + 2, TILE_PX - 4, TILE_PX - 4);
 }
 
 function drawPlot(ctx: CanvasRenderingContext2D, plot: PlotDef, state: PlotState | undefined) {

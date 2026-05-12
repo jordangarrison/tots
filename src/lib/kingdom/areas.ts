@@ -9,6 +9,11 @@ const A: TileKind = 'water';
 const R: TileKind = 'rose-plot';
 const L: TileKind = 'lavender';
 const D: TileKind = 'sand';
+const W: TileKind = 'wall';
+const O: TileKind = 'wood-floor';
+const B: TileKind = 'bed';
+const H: TileKind = 'hearth';
+const I: TileKind = 'window';
 
 // Each row is left-to-right; rows top-to-bottom.
 function grid(rows: TileKind[][]): TileKind[] {
@@ -38,7 +43,7 @@ const courtyard: AreaDef = {
 		{ x: 7, y: 0, toArea: 'rose-garden', toX: 7, toY: 8, label: "Jane's Rose Garden" },
 		{ x: 0, y: 5, toArea: 'lavender-meadow', toX: 12, toY: 5, label: "Isla's Lavender Meadow" },
 		{ x: 15, y: 4, toArea: 'pond', toX: 1, toY: 4, label: "Ollie's Pond" },
-		{ x: 7, y: 10, toArea: 'cottage', toX: 0, toY: 0, label: 'Your Cottage', comingSoon: true }
+		{ x: 7, y: 10, toArea: 'cottage', toX: 4, toY: 1, label: 'Your Cottage' }
 	],
 	plots: [],
 	npcs: [
@@ -135,12 +140,34 @@ const pond: AreaDef = {
 	welcome: 'Face the water and press SPACE to cast. Wait for a bite!'
 };
 
+const cottage: AreaDef = {
+	id: 'cottage',
+	name: 'Your Cottage',
+	accent: 'var(--rp-rose)',
+	width: 10,
+	height: 8,
+	tiles: grid([
+		[W, W, W, W, P, W, W, W, W, W],
+		[W, B, O, O, O, O, O, O, I, W],
+		[W, B, O, O, O, O, O, O, O, W],
+		[W, O, O, O, O, O, O, O, O, W],
+		[W, O, O, O, O, O, O, O, O, W],
+		[W, O, O, O, O, O, O, O, O, W],
+		[W, O, O, O, O, H, O, O, O, W],
+		[W, W, W, W, W, W, W, W, W, W]
+	]),
+	doors: [{ x: 4, y: 0, toArea: 'courtyard', toX: 7, toY: 9, label: 'Castle Courtyard' }],
+	plots: [],
+	npcs: [],
+	welcome: 'Home sweet home. Press P to decorate.'
+};
+
 export const areas: Record<AreaId, AreaDef> = {
 	courtyard,
 	'rose-garden': roseGarden,
 	'lavender-meadow': lavenderMeadow,
 	pond,
-	cottage: courtyard
+	cottage
 };
 
 export function getArea(id: AreaId): AreaDef {
