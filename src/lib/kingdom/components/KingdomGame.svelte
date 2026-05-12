@@ -4,11 +4,13 @@
 	import type { Character } from '$lib/characters';
 	import type { AreaDef, Facing, SaveState } from '../types';
 	import { isWalkable } from '../types';
-	import { areas, doorAt, npcAt, plotAt, tileAt } from '../areas';
-	import { advance, isHarvestable, plant } from '../plots';
+	import { areas, doorAt, findPlotDef, npcAt, plotAt, tileAt } from '../areas';
+	import { advance, isHarvestable, pickLavender, plant } from '../plots';
 	import { writeSave } from '../save';
 	import { areaPixelSize, draw } from '../render';
 	import TextBubble from './TextBubble.svelte';
+
+	const CAST_MS = 3500;
 
 	export let initialState: SaveState;
 	export let onExit: () => void;
@@ -32,6 +34,10 @@
 
 	let bubble: { text: string; expiresAt: number; accent: string } | null = null;
 	let interactHint: string | null = null;
+
+	// Transient (per-session) fishing state. Not persisted: if the player
+	// reloads mid-cast, the cast is simply abandoned.
+	let casting: { startedAt: number } | null = null;
 
 	const KEY_TO_DIR: Record<string, Facing> = {
 		ArrowUp: 'up',
@@ -72,7 +78,7 @@
 	}
 
 	function tryStartMove(dir: Facing) {
-		if (moveFrom) return;
+		if (moveFrom || casting) return;
 		state.facing = dir;
 		const { dx, dy } = dirDelta(dir);
 		const tx = state.playerX + dx;
@@ -104,7 +110,15 @@
 		persist();
 	}
 
+	const NPC_HELLOS: Record<string, string> = {
+		jane: 'Hello, neighbor! Care to plant a rose with me?',
+		isla: 'Hello, neighbor! The lavender smells so good today.',
+		ollie: '*happy tail wag* Wanna go fishing?'
+	};
+
 	function interact() {
+		if (casting) return;
+
 		const { dx, dy } = dirDelta(state.facing);
 		const tx = state.playerX + dx;
 		const ty = state.playerY + dy;
@@ -122,38 +136,83 @@
 		const npc = npcAt(area, tx, ty);
 		if (npc) {
 			const c = characters[npc.id];
-			showBubble(`${c.name}: "Hello, neighbor!"`, c.accent);
+			const hello = NPC_HELLOS[npc.id] ?? 'Hello, neighbor!';
+			showBubble(`${c.name}: "${hello}"`, c.accent);
 			return;
 		}
 
 		const plot = plotAt(area, tx, ty);
 		if (plot) {
-			const ps = state.plots[plot.id];
-			if (!ps || ps.stage === 'empty') {
-				state.plots[plot.id] = plant(performance.now());
-				state = state;
-				showBubble('🌱 A rose seed is planted.', 'var(--rp-love)');
-				persist();
+			if (plot.kind === 'rose') {
+				interactRose(plot.id);
 				return;
 			}
-			if (isHarvestable(ps)) {
-				state.inventory.rose += 1;
-				delete state.plots[plot.id];
-				state = state;
-				showBubble('🌹 Picked a rose!', 'var(--rp-love)');
-				persist();
+			if (plot.kind === 'lavender') {
+				interactLavender(plot.id);
 				return;
 			}
-			if (ps.stage === 'seeded') {
-				showBubble('Almost sprouting...', 'var(--rp-gold)');
-				return;
-			}
-			showBubble('Almost ready to bloom...', 'var(--rp-gold)');
+		}
+
+		const tile = tileAt(area, tx, ty);
+		if (tile === 'water') {
+			startCasting();
 			return;
 		}
 	}
 
+	function interactRose(plotId: string) {
+		const ps = state.plots[plotId];
+		if (!ps || ps.stage === 'empty') {
+			state.plots[plotId] = plant(performance.now());
+			state = state;
+			showBubble('🌱 A rose seed is planted.', 'var(--rp-love)');
+			persist();
+			return;
+		}
+		if (isHarvestable(ps, 'rose')) {
+			state.inventory.rose += 1;
+			delete state.plots[plotId];
+			state = state;
+			showBubble('🌹 Picked a rose!', 'var(--rp-love)');
+			persist();
+			return;
+		}
+		if (ps.stage === 'seeded') {
+			showBubble('Almost sprouting...', 'var(--rp-gold)');
+			return;
+		}
+		showBubble('Almost ready to bloom...', 'var(--rp-gold)');
+	}
+
+	function interactLavender(plotId: string) {
+		const ps = state.plots[plotId];
+		if (isHarvestable(ps, 'lavender')) {
+			state.inventory.lavender += 1;
+			state.plots[plotId] = pickLavender(performance.now());
+			state = state;
+			showBubble('💜 Picked some lavender!', 'var(--rp-iris)');
+			persist();
+			return;
+		}
+		showBubble('Lavender is regrowing...', 'var(--rp-iris)');
+	}
+
+	function startCasting() {
+		casting = { startedAt: performance.now() };
+		showBubble('🎣 Casting...', 'var(--rp-foam)', CAST_MS + 200);
+	}
+
+	function finishCasting() {
+		casting = null;
+		state.inventory.fish += 1;
+		state = state;
+		showBubble('🐟 Caught a fish!', 'var(--rp-foam)');
+		persist();
+	}
+
 	function computeInteractHint(): string | null {
+		if (casting) return '🎣 Casting...';
+
 		const { dx, dy } = dirDelta(state.facing);
 		const tx = state.playerX + dx;
 		const ty = state.playerY + dy;
@@ -167,10 +226,20 @@
 		const plot = plotAt(area, tx, ty);
 		if (plot) {
 			const ps = state.plots[plot.id];
-			if (!ps || ps.stage === 'empty') return '▶ Plant a seed';
-			if (isHarvestable(ps)) return '▶ Pick rose';
-			return '▶ Growing...';
+			if (plot.kind === 'rose') {
+				if (!ps || ps.stage === 'empty') return '▶ Plant a seed';
+				if (isHarvestable(ps, 'rose')) return '▶ Pick rose';
+				return '▶ Growing...';
+			}
+			if (plot.kind === 'lavender') {
+				if (isHarvestable(ps, 'lavender')) return '▶ Pick lavender';
+				return '▶ Regrowing...';
+			}
 		}
+
+		const tile = tileAt(area, tx, ty);
+		if (tile === 'water') return '▶ Cast line';
+
 		return null;
 	}
 
@@ -207,14 +276,27 @@
 		// Advance plot growth — pure, no side effects on render.
 		let dirty = false;
 		for (const id of Object.keys(state.plots)) {
+			const def = findPlotDef(id);
+			if (!def) {
+				delete state.plots[id];
+				dirty = true;
+				continue;
+			}
 			const cur = state.plots[id];
-			const next = advance(cur, now);
-			if (next !== cur) {
+			const next = advance(cur, def.kind, now);
+			if (next === null) {
+				delete state.plots[id];
+				dirty = true;
+			} else if (next !== cur) {
 				state.plots[id] = next;
 				dirty = true;
 			}
 		}
 		if (dirty) state = state;
+
+		if (casting && now - casting.startedAt >= CAST_MS) {
+			finishCasting();
+		}
 
 		if (bubble && now >= bubble.expiresAt) bubble = null;
 		interactHint = computeInteractHint();
@@ -296,7 +378,11 @@
 			◄ EXIT
 		</button>
 		<span class="area-name">{area.name}</span>
-		<span class="inventory" title="Roses picked">🌹 {state.inventory.rose}</span>
+		<div class="inventory-row">
+			<span class="inventory rose" title="Roses picked">🌹 {state.inventory.rose}</span>
+			<span class="inventory lavender" title="Lavender picked">💜 {state.inventory.lavender}</span>
+			<span class="inventory fish" title="Fish caught">🐟 {state.inventory.fish}</span>
+		</div>
 	</header>
 
 	<div class="stage">
@@ -403,14 +489,33 @@
 		text-align: center;
 	}
 
+	.inventory-row {
+		display: flex;
+		gap: 0.4rem;
+	}
+
 	.inventory {
 		font-family: 'VT323', monospace;
 		font-size: 1.4rem;
 		color: var(--rp-text);
 		background: var(--rp-surface);
-		border: 2px solid var(--rp-love);
 		padding: 0.1rem 0.6rem;
+		border: 2px solid var(--rp-muted);
+	}
+
+	.inventory.rose {
+		border-color: var(--rp-love);
 		box-shadow: 0 0 8px var(--rp-love);
+	}
+
+	.inventory.lavender {
+		border-color: var(--rp-iris);
+		box-shadow: 0 0 8px var(--rp-iris);
+	}
+
+	.inventory.fish {
+		border-color: var(--rp-foam);
+		box-shadow: 0 0 8px var(--rp-foam);
 	}
 
 	.stage {

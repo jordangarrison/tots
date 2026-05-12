@@ -1,6 +1,6 @@
 import { characters } from '$lib/characters';
 import type { Character } from '$lib/characters';
-import type { AreaDef, Facing, PlotState, TileKind } from './types';
+import type { AreaDef, Facing, PlotDef, PlotState, TileKind } from './types';
 
 export const TILE_PX = 36;
 
@@ -47,7 +47,7 @@ export function draw({ ctx, area, plots, player, now }: DrawArgs) {
 
 	for (const plot of area.plots) {
 		const state = plots[plot.id];
-		drawPlot(ctx, plot.x, plot.y, state);
+		drawPlot(ctx, plot, state);
 	}
 
 	for (const door of area.doors) {
@@ -141,7 +141,15 @@ function drawTile(
 	ctx.strokeRect(px + 0.5, py + 0.5, TILE_PX - 1, TILE_PX - 1);
 }
 
-function drawPlot(
+function drawPlot(ctx: CanvasRenderingContext2D, plot: PlotDef, state: PlotState | undefined) {
+	if (plot.kind === 'rose') {
+		drawRosePlot(ctx, plot.x, plot.y, state);
+	} else if (plot.kind === 'lavender') {
+		drawLavenderPlot(ctx, plot.x, plot.y, state);
+	}
+}
+
+function drawRosePlot(
 	ctx: CanvasRenderingContext2D,
 	x: number,
 	y: number,
@@ -173,6 +181,32 @@ function drawPlot(
 		ctx.fillRect(px + 12, py + 8, 12, 12);
 		ctx.fillStyle = '#f6c177';
 		ctx.fillRect(px + 16, py + 12, 4, 4);
+	}
+}
+
+function drawLavenderPlot(
+	ctx: CanvasRenderingContext2D,
+	x: number,
+	y: number,
+	state: PlotState | undefined
+) {
+	// Default (no state) = bloomed: the underlying lavender tile graphic shows
+	// through, so we draw nothing extra here.
+	if (!state || state.stage === 'empty') return;
+
+	if (state.stage === 'regrowing') {
+		const px = x * TILE_PX;
+		const py = y * TILE_PX;
+		// Cover the tile's bush graphic with grass so the bush "disappears".
+		ctx.fillStyle = COLOR.grass;
+		ctx.fillRect(px, py, TILE_PX, TILE_PX);
+		// Tiny green stub at the base.
+		ctx.fillStyle = '#3a8050';
+		ctx.fillRect(px + 16, py + 22, 4, 6);
+		ctx.fillRect(px + 12, py + 26, 12, 2);
+		ctx.strokeStyle = GRID_LINE;
+		ctx.lineWidth = 1;
+		ctx.strokeRect(px + 0.5, py + 0.5, TILE_PX - 1, TILE_PX - 1);
 	}
 }
 
