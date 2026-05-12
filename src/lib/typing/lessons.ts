@@ -294,6 +294,170 @@ export const LESSONS: Lesson[] = [
 			{ kind: 'words', content: 'i can type a lot' },
 			{ kind: 'words', content: 'the quick fox jumps' }
 		]
+	},
+
+	// ---------------------------------------------------------------------
+	// ADVANCED: Number row. Same fingers as the letters below, reaching UP.
+	// ---------------------------------------------------------------------
+	{
+		id: 'numbers-1-5',
+		title: 'Numbers 1–5',
+		description: 'Left hand reaches to the number row.',
+		emoji: '5️⃣',
+		tier: 'numbers',
+		newKeys: ['1', '2', '3', '4', '5'],
+		reviewKeys: [],
+		drills: [
+			{ kind: 'keys', content: '1 1 1 1 1', hint: 'Left pinky UP UP to 1.' },
+			{ kind: 'keys', content: '2 2 2 2 2', hint: 'Left ring finger to 2.' },
+			{ kind: 'keys', content: '3 3 3 3 3', hint: 'Left middle finger to 3.' },
+			{ kind: 'keys', content: '4 4 4 4 4', hint: 'Left pointer to 4.' },
+			{ kind: 'keys', content: '5 5 5 5 5', hint: 'Left pointer stretches to 5.' },
+			{ kind: 'keys', content: '1 2 3 4 5' }
+		]
+	},
+	{
+		id: 'numbers-6-0',
+		title: 'Numbers 6–0',
+		description: 'Right hand reaches to the number row.',
+		emoji: '🔟',
+		tier: 'numbers',
+		newKeys: ['6', '7', '8', '9', '0'],
+		reviewKeys: ['1', '2', '3', '4', '5'],
+		drills: [
+			{ kind: 'keys', content: '6 6 6 6 6', hint: 'Right pointer stretches to 6.' },
+			{ kind: 'keys', content: '7 7 7 7 7', hint: 'Right pointer to 7.' },
+			{ kind: 'keys', content: '8 8 8 8 8', hint: 'Right middle finger to 8.' },
+			{ kind: 'keys', content: '9 9 9 9 9', hint: 'Right ring finger to 9.' },
+			{ kind: 'keys', content: '0 0 0 0 0', hint: 'Right pinky to 0.' },
+			{ kind: 'keys', content: '6 7 8 9 0' }
+		]
+	},
+	{
+		id: 'numbers-mix',
+		title: 'Counting Mix',
+		description: 'Use both hands to type numbers.',
+		emoji: '🔢',
+		tier: 'numbers',
+		newKeys: [],
+		reviewKeys: ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0'],
+		drills: [
+			{ kind: 'words', content: '1 2 3 4 5 6 7 8 9 10' },
+			{ kind: 'words', content: '10 9 8 7 6 5 4 3 2 1', hint: 'Counting down!' },
+			{ kind: 'words', content: '24 7 365 100' }
+		]
+	},
+
+	// ---------------------------------------------------------------------
+	// ADVANCED: Capital letters. The OPPOSITE-hand pinky presses Shift while
+	// the typing finger presses the letter. UI highlights both fingers + the
+	// matching Shift key.
+	// ---------------------------------------------------------------------
+	{
+		id: 'caps-left',
+		title: 'BIG Letters (Left)',
+		description: 'Right pinky holds Shift while left hand types.',
+		emoji: '🔠',
+		tier: 'caps',
+		newKeys: ['A', 'S', 'D', 'F'],
+		reviewKeys: ['a', 's', 'd', 'f'],
+		drills: [
+			{ kind: 'keys', content: 'A A A A', hint: 'Right pinky holds ⇧ — left pinky taps A.' },
+			{ kind: 'keys', content: 'S S S S' },
+			{ kind: 'keys', content: 'D D D D' },
+			{ kind: 'keys', content: 'F F F F' },
+			{ kind: 'words', content: 'Ada Sam Dad Fad', hint: 'Capital first, then lowercase.' }
+		]
+	},
+	{
+		id: 'caps-right',
+		title: 'BIG Letters (Right)',
+		description: 'Left pinky holds Shift while right hand types.',
+		emoji: '🅰️',
+		tier: 'caps',
+		newKeys: ['J', 'K', 'L'],
+		reviewKeys: ['A', 'S', 'D', 'F', 'j', 'k', 'l'],
+		drills: [
+			{ kind: 'keys', content: 'J J J J', hint: 'Left pinky holds ⇧ — right pointer taps J.' },
+			{ kind: 'keys', content: 'K K K K' },
+			{ kind: 'keys', content: 'L L L L' },
+			{ kind: 'words', content: 'Jack Kim Lou' }
+		]
+	},
+	{
+		id: 'caps-names',
+		title: 'BIG Names',
+		description: 'Type names that start with a Capital.',
+		emoji: '🪪',
+		tier: 'caps',
+		newKeys: [],
+		reviewKeys: ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'],
+		drills: [
+			{ kind: 'words', content: 'Ada Bob Cat Dog' },
+			{ kind: 'words', content: 'Isla Jane Ollie' },
+			{ kind: 'words', content: 'I am Sam' }
+		]
+	},
+
+	// ---------------------------------------------------------------------
+	// ADVANCED: Punctuation. Mix of unshifted (.,/') and shifted (?!:").
+	// ---------------------------------------------------------------------
+	{
+		id: 'punct-easy',
+		title: 'Dots & Commas',
+		description: 'The . and , keys (no Shift needed).',
+		emoji: '🔵',
+		tier: 'punctuation',
+		newKeys: ['.', ','],
+		reviewKeys: ['a', 's', 'd', 'f', 'j', 'k', 'l'],
+		drills: [
+			{ kind: 'keys', content: '. . . . .', hint: 'Right ring finger.' },
+			{ kind: 'keys', content: ', , , , ,', hint: 'Right middle finger.' },
+			{ kind: 'words', content: 'a, b, c.' },
+			{ kind: 'words', content: 'i like cats, dogs, and fish.' }
+		]
+	},
+	{
+		id: 'punct-question',
+		title: 'Question Marks?',
+		description: 'Press ⇧ + / for a question mark.',
+		emoji: '❓',
+		tier: 'punctuation',
+		newKeys: ['?'],
+		reviewKeys: ['.', ',', 'a', 's', 'd', 'f', 'j', 'k', 'l'],
+		drills: [
+			{ kind: 'keys', content: '? ? ? ? ?', hint: 'Left pinky holds ⇧, right pinky taps /.' },
+			{ kind: 'words', content: 'who? me?' },
+			{ kind: 'words', content: 'cat? dog? fish?' }
+		]
+	},
+	{
+		id: 'punct-bang',
+		title: 'Excited!',
+		description: 'Press ⇧ + 1 for an exclamation point.',
+		emoji: '❗',
+		tier: 'punctuation',
+		newKeys: ['!'],
+		reviewKeys: ['?', '.', ',', '1'],
+		drills: [
+			{ kind: 'keys', content: '! ! ! ! !', hint: 'Right pinky holds ⇧, left pinky taps 1.' },
+			{ kind: 'words', content: 'yes! wow! cool!' },
+			{ kind: 'words', content: 'go cat go!' }
+		]
+	},
+	{
+		id: 'punct-apos',
+		title: 'Apostrophes',
+		description: "It's the ' key, right pinky.",
+		emoji: '🪶',
+		tier: 'punctuation',
+		newKeys: ["'"],
+		reviewKeys: ['.', ',', '?', 'a', 's', 'd', 'f', 'j', 'k', 'l'],
+		drills: [
+			{ kind: 'keys', content: "' ' ' ' '", hint: 'Right pinky, next to semicolon.' },
+			{ kind: 'words', content: "it's dad's cat's" },
+			{ kind: 'words', content: "i'm ok. it's fine." }
+		]
 	}
 ];
 
