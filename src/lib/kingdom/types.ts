@@ -1,6 +1,13 @@
 import type { CharacterId } from '$lib/characters';
 
-export type AreaId = 'courtyard' | 'rose-garden' | 'lavender-meadow' | 'pond' | 'cottage';
+export type AreaId =
+	| 'courtyard'
+	| 'rose-garden'
+	| 'lavender-meadow'
+	| 'pond'
+	| 'cottage'
+	| 'bluebonnet-garden'
+	| 'tulip-garden';
 
 export type TileKind =
 	| 'grass'
@@ -10,9 +17,11 @@ export type TileKind =
 	| 'wall'
 	| 'flower-bed'
 	| 'lavender'
+	| 'bluebonnet'
 	| 'tree'
 	| 'stone'
 	| 'rose-plot'
+	| 'seed-bin'
 	| 'wood-floor'
 	| 'bed'
 	| 'hearth'
@@ -20,7 +29,7 @@ export type TileKind =
 
 export type Facing = 'up' | 'down' | 'left' | 'right';
 
-export type PlotKind = 'rose' | 'lavender';
+export type PlotKind = 'rose' | 'lavender' | 'bluebonnet';
 
 export interface PlotDef {
 	id: string;
@@ -65,12 +74,14 @@ export interface PlotState {
 	stageStartedAt: number;
 }
 
-export type ItemId = 'rose' | 'lavender' | 'fish';
+export type ItemId = 'rose' | 'lavender' | 'fish' | 'tulip' | 'seed';
 
 export interface Inventory {
 	rose: number;
 	lavender: number;
 	fish: number;
+	tulip: number;
+	seed: number;
 }
 
 export interface PlacedDecor {
@@ -96,7 +107,7 @@ export interface SaveState {
 export const SAVE_KEY = 'tots:kingdom:save:v1';
 
 export function emptyInventory(): Inventory {
-	return { rose: 0, lavender: 0, fish: 0 };
+	return { rose: 0, lavender: 0, fish: 0, tulip: 0, seed: 0 };
 }
 
 export function isWalkable(kind: TileKind): boolean {

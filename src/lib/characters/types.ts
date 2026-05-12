@@ -1,4 +1,4 @@
-export type CharacterId = 'jane' | 'isla' | 'ollie';
+export type CharacterId = 'jane' | 'isla' | 'ollie' | 'mommy' | 'daddy';
 
 export interface Pronouns {
 	they: string;
