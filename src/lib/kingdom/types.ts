@@ -12,7 +12,11 @@ export type TileKind =
 	| 'lavender'
 	| 'tree'
 	| 'stone'
-	| 'rose-plot';
+	| 'rose-plot'
+	| 'wood-floor'
+	| 'bed'
+	| 'hearth'
+	| 'window';
 
 export type Facing = 'up' | 'down' | 'left' | 'right';
 
@@ -69,6 +73,13 @@ export interface Inventory {
 	fish: number;
 }
 
+export interface PlacedDecor {
+	areaId: AreaId;
+	x: number;
+	y: number;
+	itemId: ItemId;
+}
+
 export interface SaveState {
 	version: 1;
 	characterId: CharacterId;
@@ -79,6 +90,7 @@ export interface SaveState {
 	inventory: Inventory;
 	plots: Record<string, PlotState>;
 	visitedAreas: AreaId[];
+	placedDecor: PlacedDecor[];
 }
 
 export const SAVE_KEY = 'tots:kingdom:save:v1';
@@ -92,6 +104,7 @@ export function isWalkable(kind: TileKind): boolean {
 		case 'grass':
 		case 'path':
 		case 'sand':
+		case 'wood-floor':
 			return true;
 		default:
 			return false;

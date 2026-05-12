@@ -12,7 +12,8 @@ export function newSave(characterId: CharacterId): SaveState {
 		facing: 'down',
 		inventory: emptyInventory(),
 		plots: {},
-		visitedAreas: ['courtyard']
+		visitedAreas: ['courtyard'],
+		placedDecor: []
 	};
 }
 
@@ -25,6 +26,7 @@ export function loadSave(): SaveState | null {
 		if (parsed && parsed.version === 1) {
 			// Backfill any inventory keys added since this save was written.
 			parsed.inventory = { ...emptyInventory(), ...parsed.inventory };
+			if (!Array.isArray(parsed.placedDecor)) parsed.placedDecor = [];
 			return parsed as SaveState;
 		}
 		return null;

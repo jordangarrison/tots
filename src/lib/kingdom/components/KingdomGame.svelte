@@ -2,12 +2,13 @@
 	import { onMount, onDestroy } from 'svelte';
 	import { characters } from '$lib/characters';
 	import type { Character } from '$lib/characters';
-	import type { AreaDef, Facing, SaveState } from '../types';
+	import type { AreaDef, Facing, ItemId, PlacedDecor, SaveState } from '../types';
 	import { isWalkable } from '../types';
 	import { areas, doorAt, findPlotDef, npcAt, plotAt, tileAt } from '../areas';
 	import { advance, isHarvestable, pickLavender, plant } from '../plots';
 	import { writeSave } from '../save';
-	import { areaPixelSize, draw } from '../render';
+	import { TILE_PX, areaPixelSize, draw } from '../render';
+	import type { PlaceCursor } from '../render';
 	import TextBubble from './TextBubble.svelte';
 
 	const CAST_MS = 3500;
@@ -38,6 +39,22 @@
 	// Transient (per-session) fishing state. Not persisted: if the player
 	// reloads mid-cast, the cast is simply abandoned.
 	let casting: { startedAt: number } | null = null;
+
+	// Place-mode lets the player drop a chosen inventory item onto the
+	// cottage floor. Per-session UI state only — no need to persist.
+	let placeMode: { itemId: ItemId } | null = null;
+
+	const ITEM_ORDER: ItemId[] = ['rose', 'lavender', 'fish'];
+	const ITEM_LABEL: Record<ItemId, string> = {
+		rose: '🌹 Rose',
+		lavender: '💜 Lavender',
+		fish: '🐟 Fish'
+	};
+	const ITEM_ACCENT: Record<ItemId, string> = {
+		rose: 'var(--rp-love)',
+		lavender: 'var(--rp-iris)',
+		fish: 'var(--rp-foam)'
+	};
 
 	const KEY_TO_DIR: Record<string, Facing> = {
 		ArrowUp: 'up',
@@ -102,6 +119,7 @@
 		state.areaId = areaId;
 		state.playerX = toX;
 		state.playerY = toY;
+		if (areaId !== 'cottage') placeMode = null;
 		if (!state.visitedAreas.includes(areaId)) {
 			state.visitedAreas = [...state.visitedAreas, areaId];
 			showBubble(areas[areaId].welcome, areas[areaId].accent, 4200);
@@ -116,12 +134,107 @@
 		ollie: '*happy tail wag* Wanna go fishing?'
 	};
 
+	function decorAt(x: number, y: number): PlacedDecor | null {
+		return (
+			state.placedDecor.find((d) => d.areaId === state.areaId && d.x === x && d.y === y) ?? null
+		);
+	}
+
+	function canPlaceAt(x: number, y: number): boolean {
+		if (state.areaId !== 'cottage') return false;
+		if (tileAt(area, x, y) !== 'wood-floor') return false;
+		if (decorAt(x, y)) return false;
+		return true;
+	}
+
+	function firstAvailableItem(): ItemId | null {
+		for (const id of ITEM_ORDER) {
+			if (state.inventory[id] > 0) return id;
+		}
+		return null;
+	}
+
+	function selectItem(id: ItemId) {
+		placeMode = { itemId: id };
+	}
+
+	function toggleDecorating() {
+		if (placeMode) {
+			placeMode = null;
+			return;
+		}
+		if (state.areaId !== 'cottage') {
+			showBubble('Decorate inside your cottage.', 'var(--rp-rose)');
+			return;
+		}
+		const first = firstAvailableItem();
+		if (!first) {
+			showBubble('Gather flowers or fish first!', 'var(--rp-gold)');
+			return;
+		}
+		placeMode = { itemId: first };
+		showBubble('Pick a tile, then SPACE to place.', 'var(--rp-rose)', 2400);
+	}
+
+	function placeAt(x: number, y: number) {
+		if (!placeMode) return;
+		if (!canPlaceAt(x, y)) {
+			showBubble('Place on the wood floor.', 'var(--rp-gold)', 1400);
+			return;
+		}
+		const id = placeMode.itemId;
+		if (state.inventory[id] <= 0) {
+			showBubble(`No ${id} left.`, 'var(--rp-gold)', 1400);
+			return;
+		}
+		state.inventory[id] -= 1;
+		state.placedDecor = [
+			...state.placedDecor,
+			{ areaId: 'cottage', x, y, itemId: id }
+		];
+		state = state;
+		persist();
+		// If we ran out of this item, auto-swap to the next available so the
+		// kid stays in place mode without a dead-end.
+		if (state.inventory[id] <= 0) {
+			const next = firstAvailableItem();
+			placeMode = next ? { itemId: next } : null;
+		}
+	}
+
+	function pickupAt(x: number, y: number): boolean {
+		const d = decorAt(x, y);
+		if (!d) return false;
+		state.placedDecor = state.placedDecor.filter((it) => it !== d);
+		state.inventory[d.itemId] = (state.inventory[d.itemId] ?? 0) + 1;
+		state = state;
+		showBubble('Picked it up.', 'var(--rp-rose)', 1200);
+		persist();
+		return true;
+	}
+
 	function interact() {
 		if (casting) return;
 
 		const { dx, dy } = dirDelta(state.facing);
 		const tx = state.playerX + dx;
 		const ty = state.playerY + dy;
+
+		// In place mode, SPACE places (or picks up) on the facing tile.
+		if (placeMode) {
+			if (decorAt(tx, ty)) {
+				pickupAt(tx, ty);
+			} else {
+				placeAt(tx, ty);
+			}
+			return;
+		}
+
+		// Normal play: SPACE on a placed decor tile picks it back up.
+		if (decorAt(tx, ty)) {
+			pickupAt(tx, ty);
+			return;
+		}
 
 		const door = doorAt(area, tx, ty);
 		if (door) {
@@ -217,6 +330,14 @@
 		const tx = state.playerX + dx;
 		const ty = state.playerY + dy;
 
+		if (placeMode) {
+			if (decorAt(tx, ty)) return '▶ Pick up';
+			if (canPlaceAt(tx, ty)) return `▶ Place ${ITEM_LABEL[placeMode.itemId]}`;
+			return '✗ Not here';
+		}
+
+		if (decorAt(tx, ty)) return '▶ Pick up';
+
 		const door = doorAt(area, tx, ty);
 		if (door) return door.comingSoon ? `🚧 ${door.label}` : `▶ ${door.label}`;
 
@@ -241,6 +362,32 @@
 		if (tile === 'water') return '▶ Cast line';
 
 		return null;
+	}
+
+	function placeCursor(): PlaceCursor | null {
+		if (!placeMode) return null;
+		const { dx, dy } = dirDelta(state.facing);
+		const tx = state.playerX + dx;
+		const ty = state.playerY + dy;
+		const valid = canPlaceAt(tx, ty) || !!decorAt(tx, ty);
+		return { itemId: placeMode.itemId, x: tx, y: ty, valid };
+	}
+
+	function onCanvasPointer(e: PointerEvent) {
+		if (!placeMode) return;
+		const target = e.currentTarget as HTMLCanvasElement;
+		const rect = target.getBoundingClientRect();
+		const scale = rect.width / target.width;
+		const cx = (e.clientX - rect.left) / scale;
+		const cy = (e.clientY - rect.top) / scale;
+		const tx = Math.floor(cx / TILE_PX);
+		const ty = Math.floor(cy / TILE_PX);
+		if (tx < 0 || ty < 0 || tx >= area.width || ty >= area.height) return;
+		if (decorAt(tx, ty)) {
+			pickupAt(tx, ty);
+		} else if (canPlaceAt(tx, ty)) {
+			placeAt(tx, ty);
+		}
 	}
 
 	// Cell-to-cell lerp for rendering only — game state holds integer cell coords.
@@ -313,6 +460,8 @@
 					facing: state.facing,
 					character
 				},
+				placedDecor: state.placedDecor,
+				placeCursor: placeCursor(),
 				now
 			});
 		}
@@ -330,6 +479,25 @@
 		if (e.key === ' ' || e.key === 'Enter') {
 			e.preventDefault();
 			interact();
+			return;
+		}
+		if (e.key === 'p' || e.key === 'P') {
+			e.preventDefault();
+			toggleDecorating();
+			return;
+		}
+		if (e.key === 'Escape' && placeMode) {
+			e.preventDefault();
+			placeMode = null;
+			return;
+		}
+		if (placeMode && (e.key === '1' || e.key === '2' || e.key === '3')) {
+			const idx = Number(e.key) - 1;
+			const id = ITEM_ORDER[idx];
+			if (state.inventory[id] > 0) {
+				e.preventDefault();
+				selectItem(id);
+			}
 		}
 	}
 
@@ -385,6 +553,39 @@
 		</div>
 	</header>
 
+	{#if state.areaId === 'cottage'}
+		<div class="picker" class:open={placeMode}>
+			<button
+				class="decorate-toggle"
+				type="button"
+				on:click={toggleDecorating}
+				aria-pressed={!!placeMode}
+			>
+				{placeMode ? '✕ Done' : '🛠 Decorate'}
+			</button>
+			{#if placeMode}
+				<div class="items" role="radiogroup" aria-label="Pick a decoration">
+					{#each ITEM_ORDER as id, idx (id)}
+						<button
+							type="button"
+							class="item"
+							class:selected={placeMode.itemId === id}
+							style="--item-accent: {ITEM_ACCENT[id]};"
+							role="radio"
+							aria-checked={placeMode.itemId === id}
+							disabled={state.inventory[id] <= 0}
+							on:click={() => selectItem(id)}
+						>
+							<span class="item-label">{ITEM_LABEL[id]}</span>
+							<span class="item-count">×{state.inventory[id]}</span>
+							<span class="item-key">{idx + 1}</span>
+						</button>
+					{/each}
+				</div>
+			{/if}
+		</div>
+	{/if}
+
 	<div class="stage">
 		<canvas
 			bind:this={canvasEl}
@@ -392,6 +593,7 @@
 			height={areaSize.h}
 			tabindex="0"
 			aria-label="Kingdom game canvas"
+			on:pointerdown={onCanvasPointer}
 		/>
 
 		{#if bubble}
@@ -516,6 +718,87 @@
 	.inventory.fish {
 		border-color: var(--rp-foam);
 		box-shadow: 0 0 8px var(--rp-foam);
+	}
+
+	.picker {
+		display: flex;
+		flex-wrap: wrap;
+		justify-content: center;
+		align-items: center;
+		gap: 0.5rem;
+		width: 100%;
+		max-width: 720px;
+	}
+
+	.decorate-toggle {
+		background: var(--rp-surface);
+		border: 2px solid var(--rp-rose);
+		color: var(--rp-rose);
+		font-family: 'Press Start 2P', cursive;
+		font-size: 0.55rem;
+		letter-spacing: 0.18em;
+		padding: 0.45rem 0.8rem;
+		cursor: pointer;
+		box-shadow: 0 0 6px var(--rp-rose);
+	}
+
+	.picker.open .decorate-toggle {
+		background: var(--rp-rose);
+		color: var(--rp-base);
+	}
+
+	.items {
+		display: flex;
+		gap: 0.4rem;
+		flex-wrap: wrap;
+	}
+
+	.item {
+		position: relative;
+		background: var(--rp-surface);
+		border: 2px solid var(--item-accent);
+		color: var(--rp-text);
+		font-family: 'VT323', monospace;
+		font-size: 1.1rem;
+		padding: 0.35rem 0.7rem 0.35rem 0.55rem;
+		display: flex;
+		flex-direction: column;
+		align-items: flex-start;
+		min-width: 5.5rem;
+		cursor: pointer;
+		box-shadow: 0 0 4px var(--item-accent);
+	}
+
+	.item:disabled {
+		opacity: 0.4;
+		cursor: not-allowed;
+		box-shadow: none;
+	}
+
+	.item.selected {
+		background: var(--item-accent);
+		color: var(--rp-base);
+		box-shadow: 0 0 10px var(--item-accent);
+	}
+
+	.item-label {
+		font-size: 0.95rem;
+		line-height: 1;
+	}
+
+	.item-count {
+		font-size: 0.85rem;
+		opacity: 0.85;
+	}
+
+	.item-key {
+		position: absolute;
+		top: 2px;
+		right: 4px;
+		font-family: 'Press Start 2P', cursive;
+		font-size: 0.45rem;
+		letter-spacing: 0.1em;
+		opacity: 0.75;
 	}
 
 	.stage {
