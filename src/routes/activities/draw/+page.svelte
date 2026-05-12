@@ -2,6 +2,7 @@
 	import P5 from 'p5-svelte';
 	import type { Sketch } from 'p5-svelte';
 	import { printCanvas } from '$lib/print';
+	import { saveImage } from '$lib/save';
 
 	export const prerender = true;
 
@@ -389,6 +390,12 @@
 		if (!canvas) return;
 		printCanvas(canvas, 'My Drawing');
 	};
+
+	const saveDrawing = async () => {
+		const canvas = canvasContainer?.querySelector('canvas') as HTMLCanvasElement | null;
+		if (!canvas) return;
+		await saveImage(canvas, { baseName: `drawing-${Date.now()}` });
+	};
 </script>
 
 <div class="game-container">
@@ -403,6 +410,9 @@
 		<span class="sep">|</span>
 		<button type="button" class="print-btn" on:click={printDrawing} title="Print this drawing">
 			🖨 PRINT
+		</button>
+		<button type="button" class="save-btn" on:click={saveDrawing} title="Save this drawing as a PNG">
+			💾 SAVE
 		</button>
 	</div>
 	<div class="canvas-wrapper" bind:this={canvasContainer}>
@@ -494,6 +504,28 @@
 	.print-btn:hover,
 	.print-btn:focus-visible {
 		background: var(--rp-foam);
+		color: var(--rp-base);
+		text-shadow: none;
+		outline: none;
+	}
+
+	.save-btn {
+		font-family: inherit;
+		font-size: inherit;
+		letter-spacing: inherit;
+		color: var(--rp-iris);
+		background: transparent;
+		text-shadow: 0 0 6px var(--rp-iris);
+		padding: 0.25rem 0.5rem;
+		border: 2px solid var(--rp-iris);
+		border-radius: 3px;
+		cursor: pointer;
+		transition: background 0.15s, color 0.15s;
+	}
+
+	.save-btn:hover,
+	.save-btn:focus-visible {
+		background: var(--rp-iris);
 		color: var(--rp-base);
 		text-shadow: none;
 		outline: none;
