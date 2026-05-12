@@ -26,7 +26,7 @@
 	const darkBg: [number, number, number] = [31, 29, 46];
 	const lightBg: [number, number, number] = [250, 244, 237];
 	let darkMode = true;
-	$: bgColor = darkMode ? darkBg : lightBg;
+	const currentBg = () => (darkMode ? darkBg : lightBg);
 
 	// Shape types
 	const shapeTypes = ['circle', 'star', 'heart', 'triangle', 'square', 'diamond'];
@@ -87,7 +87,8 @@
 		p5.setup = () => {
 			const size = getCanvasSize();
 			p5.createCanvas(size.width, size.height);
-			p5.background(bgColor[0], bgColor[1], bgColor[2]);
+			const bg = currentBg();
+			p5.background(bg[0], bg[1], bg[2]);
 			p5.noStroke();
 		};
 
@@ -173,7 +174,8 @@
 		// Repaint the background and replay every committed shape. Used when
 		// toggling light/dark so existing artwork stays put.
 		redrawCanvas = () => {
-			p5.background(bgColor[0], bgColor[1], bgColor[2]);
+			const bg = currentBg();
+			p5.background(bg[0], bg[1], bg[2]);
 			p5.noStroke();
 			for (const shape of shapes) {
 				for (let i = 3; i > 0; i--) {
@@ -226,7 +228,8 @@
 				// Create confetti for each shape before clearing
 				shapes.forEach(s => createConfetti(s.x, s.y, 10));
 				shapes = [];
-				p5.background(bgColor[0], bgColor[1], bgColor[2]);
+				const bg = currentBg();
+				p5.background(bg[0], bg[1], bg[2]);
 				return false;
 			}
 
