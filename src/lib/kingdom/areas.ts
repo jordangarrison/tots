@@ -1,4 +1,4 @@
-import type { AreaDef, AreaId, TileKind } from './types';
+import type { AreaDef, AreaId, PlotDef, TileKind } from './types';
 
 const T: TileKind = 'tree';
 const G: TileKind = 'grass';
@@ -7,6 +7,8 @@ const F: TileKind = 'flower-bed';
 const S: TileKind = 'stone';
 const A: TileKind = 'water';
 const R: TileKind = 'rose-plot';
+const L: TileKind = 'lavender';
+const D: TileKind = 'sand';
 
 // Each row is left-to-right; rows top-to-bottom.
 function grid(rows: TileKind[][]): TileKind[] {
@@ -34,8 +36,8 @@ const courtyard: AreaDef = {
 	]),
 	doors: [
 		{ x: 7, y: 0, toArea: 'rose-garden', toX: 7, toY: 8, label: "Jane's Rose Garden" },
-		{ x: 0, y: 5, toArea: 'lavender-meadow', toX: 0, toY: 0, label: "Isla's Lavender Meadow", comingSoon: true },
-		{ x: 15, y: 4, toArea: 'pond', toX: 0, toY: 0, label: "Ollie's Pond", comingSoon: true },
+		{ x: 0, y: 5, toArea: 'lavender-meadow', toX: 12, toY: 5, label: "Isla's Lavender Meadow" },
+		{ x: 15, y: 4, toArea: 'pond', toX: 1, toY: 4, label: "Ollie's Pond" },
 		{ x: 7, y: 10, toArea: 'cottage', toX: 0, toY: 0, label: 'Your Cottage', comingSoon: true }
 	],
 	plots: [],
@@ -78,11 +80,66 @@ const roseGarden: AreaDef = {
 	welcome: 'Press SPACE on a plot to plant a rose. Wait. Press SPACE again to harvest.'
 };
 
+const lavenderMeadow: AreaDef = {
+	id: 'lavender-meadow',
+	name: "Isla's Lavender Meadow",
+	accent: 'var(--rp-iris)',
+	width: 14,
+	height: 10,
+	tiles: grid([
+		[T, T, T, T, T, T, T, T, T, T, T, T, T, T],
+		[T, G, G, G, G, G, G, G, G, G, G, G, G, T],
+		[T, G, L, G, G, L, G, G, L, G, G, G, F, T],
+		[T, G, G, G, G, G, G, G, G, G, G, G, G, T],
+		[T, G, L, G, G, L, G, G, L, G, G, G, G, T],
+		[T, G, G, G, G, G, G, G, G, G, G, G, G, P],
+		[T, G, G, G, G, G, G, G, G, G, G, G, G, T],
+		[T, F, G, G, G, G, G, G, G, G, G, G, G, T],
+		[T, G, G, G, G, G, G, G, G, G, G, G, G, T],
+		[T, T, T, T, T, T, T, T, T, T, T, T, T, T]
+	]),
+	doors: [{ x: 13, y: 5, toArea: 'courtyard', toX: 1, toY: 5, label: 'Castle Courtyard' }],
+	plots: [
+		{ id: 'lavender-1', x: 2, y: 2, kind: 'lavender' },
+		{ id: 'lavender-2', x: 5, y: 2, kind: 'lavender' },
+		{ id: 'lavender-3', x: 8, y: 2, kind: 'lavender' },
+		{ id: 'lavender-4', x: 2, y: 4, kind: 'lavender' },
+		{ id: 'lavender-5', x: 5, y: 4, kind: 'lavender' },
+		{ id: 'lavender-6', x: 8, y: 4, kind: 'lavender' }
+	],
+	npcs: [{ id: 'isla', x: 7, y: 6 }],
+	welcome: 'Walk up to a lavender bush and press SPACE to pick it. It will regrow.'
+};
+
+const pond: AreaDef = {
+	id: 'pond',
+	name: "Ollie's Pond",
+	accent: 'var(--rp-foam)',
+	width: 14,
+	height: 10,
+	tiles: grid([
+		[T, T, T, T, T, T, T, T, T, T, T, T, T, T],
+		[T, G, G, G, G, G, G, G, G, G, G, G, G, T],
+		[T, G, G, D, D, D, D, D, D, G, G, G, G, T],
+		[T, G, D, D, A, A, A, A, D, D, G, G, G, T],
+		[P, G, D, A, A, A, A, A, A, D, G, G, G, T],
+		[T, G, D, A, A, A, A, A, A, D, G, G, G, T],
+		[T, G, D, D, A, A, A, A, D, D, G, G, G, T],
+		[T, G, G, D, D, D, D, D, D, G, G, G, G, T],
+		[T, G, G, G, G, G, G, G, G, G, G, G, G, T],
+		[T, T, T, T, T, T, T, T, T, T, T, T, T, T]
+	]),
+	doors: [{ x: 0, y: 4, toArea: 'courtyard', toX: 14, toY: 4, label: 'Castle Courtyard' }],
+	plots: [],
+	npcs: [{ id: 'ollie', x: 11, y: 7 }],
+	welcome: 'Face the water and press SPACE to cast. Wait for a bite!'
+};
+
 export const areas: Record<AreaId, AreaDef> = {
 	courtyard,
 	'rose-garden': roseGarden,
-	'lavender-meadow': courtyard,
-	pond: courtyard,
+	'lavender-meadow': lavenderMeadow,
+	pond,
 	cottage: courtyard
 };
 
@@ -105,4 +162,12 @@ export function plotAt(area: AreaDef, x: number, y: number) {
 
 export function npcAt(area: AreaDef, x: number, y: number) {
 	return area.npcs.find((n) => n.x === x && n.y === y) ?? null;
+}
+
+export function findPlotDef(id: string): PlotDef | null {
+	for (const area of Object.values(areas)) {
+		const found = area.plots.find((p) => p.id === id);
+		if (found) return found;
+	}
+	return null;
 }

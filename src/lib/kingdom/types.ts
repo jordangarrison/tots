@@ -16,11 +16,13 @@ export type TileKind =
 
 export type Facing = 'up' | 'down' | 'left' | 'right';
 
+export type PlotKind = 'rose' | 'lavender';
+
 export interface PlotDef {
 	id: string;
 	x: number;
 	y: number;
-	kind: 'rose';
+	kind: PlotKind;
 }
 
 export interface DoorDef {
@@ -52,17 +54,19 @@ export interface AreaDef {
 	welcome: string;
 }
 
-export type PlotStage = 'empty' | 'seeded' | 'sprout' | 'bloomed';
+export type PlotStage = 'empty' | 'seeded' | 'sprout' | 'bloomed' | 'regrowing';
 
 export interface PlotState {
 	stage: PlotStage;
 	stageStartedAt: number;
 }
 
-export type ItemId = 'rose';
+export type ItemId = 'rose' | 'lavender' | 'fish';
 
 export interface Inventory {
 	rose: number;
+	lavender: number;
+	fish: number;
 }
 
 export interface SaveState {
@@ -80,7 +84,7 @@ export interface SaveState {
 export const SAVE_KEY = 'tots:kingdom:save:v1';
 
 export function emptyInventory(): Inventory {
-	return { rose: 0 };
+	return { rose: 0, lavender: 0, fish: 0 };
 }
 
 export function isWalkable(kind: TileKind): boolean {

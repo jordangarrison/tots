@@ -22,7 +22,11 @@ export function loadSave(): SaveState | null {
 		const raw = window.localStorage.getItem(SAVE_KEY);
 		if (!raw) return null;
 		const parsed = JSON.parse(raw);
-		if (parsed && parsed.version === 1) return parsed as SaveState;
+		if (parsed && parsed.version === 1) {
+			// Backfill any inventory keys added since this save was written.
+			parsed.inventory = { ...emptyInventory(), ...parsed.inventory };
+			return parsed as SaveState;
+		}
 		return null;
 	} catch {
 		return null;
