@@ -12,9 +12,11 @@ const COLOR: Record<TileKind, string> = {
 	wall: '#3d3a52',
 	'flower-bed': '#6b3a52',
 	lavender: '#7a5a9c',
+	bluebonnet: '#3a4b8a',
 	tree: '#27543c',
 	stone: '#6e6a86',
 	'rose-plot': '#5a3a25',
+	'seed-bin': '#6b4a30',
 	'wood-floor': '#6b4a30',
 	bed: '#6b4a30',
 	hearth: '#3d3a52',
@@ -36,6 +38,13 @@ export interface PlaceCursor {
 	valid: boolean;
 }
 
+export interface WildTulip {
+	x: number;
+	y: number;
+	spawnedAt: number;
+	lifetimeMs: number;
+}
+
 interface DrawArgs {
 	ctx: CanvasRenderingContext2D;
 	area: AreaDef;
@@ -43,10 +52,20 @@ interface DrawArgs {
 	player: { x: number; y: number; facing: Facing; character: Character };
 	placedDecor: PlacedDecor[];
 	placeCursor: PlaceCursor | null;
+	wildTulips: WildTulip[];
 	now: number;
 }
 
-export function draw({ ctx, area, plots, player, placedDecor, placeCursor, now }: DrawArgs) {
+export function draw({
+	ctx,
+	area,
+	plots,
+	player,
+	placedDecor,
+	placeCursor,
+	wildTulips,
+	now
+}: DrawArgs) {
 	const { w, h } = areaPixelSize(area);
 	ctx.fillStyle = '#191724';
 	ctx.fillRect(0, 0, w, h);
@@ -61,6 +80,10 @@ export function draw({ ctx, area, plots, player, placedDecor, placeCursor, now }
 	for (const plot of area.plots) {
 		const state = plots[plot.id];
 		drawPlot(ctx, plot, state);
+	}
+
+	for (const tulip of wildTulips) {
+		drawWildTulip(ctx, tulip, now);
 	}
 
 	for (const decor of placedDecor) {
@@ -130,6 +153,25 @@ function drawTile(
 			ctx.fillRect(px + 26, py + 6, 4, 8);
 			ctx.fillRect(px + 12, py + 20, 4, 10);
 			break;
+		case 'bluebonnet': {
+			// Base patch of grass so the deep-blue tile colour reads as a bush.
+			ctx.fillStyle = COLOR.grass;
+			ctx.fillRect(px, py, TILE_PX, TILE_PX);
+			// Tall blue spire with paler tips — classic bluebonnet silhouette.
+			ctx.fillStyle = '#3a8050';
+			ctx.fillRect(px + 14, py + 18, 3, 12);
+			ctx.fillRect(px + 22, py + 20, 3, 10);
+			ctx.fillStyle = '#3b5fa6';
+			ctx.fillRect(px + 12, py + 8, 7, 14);
+			ctx.fillRect(px + 20, py + 12, 7, 10);
+			ctx.fillStyle = '#6a8ed6';
+			ctx.fillRect(px + 13, py + 9, 5, 4);
+			ctx.fillRect(px + 21, py + 13, 5, 3);
+			ctx.fillStyle = '#e0def4';
+			ctx.fillRect(px + 14, py + 9, 2, 2);
+			ctx.fillRect(px + 22, py + 13, 2, 2);
+			break;
+		}
 		case 'stone':
 			ctx.fillStyle = '#908caa';
 			ctx.fillRect(px + 4, py + 4, TILE_PX - 8, TILE_PX - 8);
@@ -137,6 +179,26 @@ function drawTile(
 			ctx.fillRect(px + 10, py + 12, 4, 4);
 			ctx.fillRect(px + 22, py + 20, 4, 4);
 			break;
+		case 'seed-bin': {
+			// Grass base behind the bin so the silhouette reads cleanly.
+			ctx.fillStyle = COLOR.grass;
+			ctx.fillRect(px, py, TILE_PX, TILE_PX);
+			// Wooden barrel.
+			ctx.fillStyle = '#4a2f1d';
+			ctx.fillRect(px + 6, py + 8, TILE_PX - 12, TILE_PX - 12);
+			ctx.fillStyle = '#6b4a30';
+			ctx.fillRect(px + 8, py + 10, TILE_PX - 16, TILE_PX - 16);
+			// Iron hoops.
+			ctx.fillStyle = '#26233a';
+			ctx.fillRect(px + 6, py + 11, TILE_PX - 12, 2);
+			ctx.fillRect(px + 6, py + 24, TILE_PX - 12, 2);
+			// Heap of seeds peeking over the rim.
+			ctx.fillStyle = '#d9c089';
+			ctx.fillRect(px + 10, py + 6, 4, 4);
+			ctx.fillRect(px + 16, py + 4, 4, 4);
+			ctx.fillRect(px + 22, py + 6, 4, 4);
+			break;
+		}
 		case 'wall':
 			ctx.fillStyle = '#26233a';
 			ctx.fillRect(px + 1, py + 1, TILE_PX - 2, TILE_PX - 2);
@@ -253,7 +315,79 @@ function drawDecor(ctx: CanvasRenderingContext2D, x: number, y: number, itemId: 
 			ctx.fillStyle = '#26233a';
 			ctx.fillRect(px + 14, py + 16, 4, 1);
 			break;
+		case 'tulip':
+			ctx.fillStyle = '#3a8050';
+			ctx.fillRect(px + 16, py + 18, 4, 12);
+			ctx.fillRect(px + 10, py + 22, 8, 3);
+			ctx.fillStyle = '#eb6f92';
+			ctx.fillRect(px + 12, py + 10, 4, 8);
+			ctx.fillRect(px + 20, py + 10, 4, 8);
+			ctx.fillRect(px + 16, py + 8, 4, 10);
+			ctx.fillStyle = '#f6c177';
+			ctx.fillRect(px + 16, py + 10, 4, 4);
+			break;
+		case 'seed':
+			// Small linen sack with seeds spilling out.
+			ctx.fillStyle = '#d9c089';
+			ctx.fillRect(px + 10, py + 12, 16, 16);
+			ctx.fillStyle = '#9b8b6e';
+			ctx.fillRect(px + 10, py + 10, 16, 4);
+			ctx.fillStyle = '#4a3a2a';
+			ctx.fillRect(px + 14, py + 8, 8, 4);
+			ctx.fillStyle = '#3d2a1c';
+			ctx.fillRect(px + 12, py + 26, 2, 2);
+			ctx.fillRect(px + 18, py + 26, 2, 2);
+			ctx.fillRect(px + 24, py + 26, 2, 2);
+			break;
 	}
+}
+
+function drawWildTulip(ctx: CanvasRenderingContext2D, tulip: WildTulip, now: number) {
+	const px = tulip.x * TILE_PX;
+	const py = tulip.y * TILE_PX;
+	const elapsed = now - tulip.spawnedAt;
+	const lifeT = Math.min(1, Math.max(0, elapsed / tulip.lifetimeMs));
+	// Pop-in (first 250ms) and wilt-out (last 25%).
+	const popT = Math.min(1, elapsed / 250);
+	const wiltStart = 0.75;
+	const wiltT = lifeT > wiltStart ? (lifeT - wiltStart) / (1 - wiltStart) : 0;
+	const scale = popT * (1 - wiltT * 0.65);
+	const sway = Math.sin(now / 220 + tulip.x * 1.7 + tulip.y) * 1.5;
+
+	ctx.save();
+	ctx.translate(px + TILE_PX / 2 + sway, py + TILE_PX);
+	ctx.scale(scale, scale);
+	ctx.translate(-(TILE_PX / 2), -TILE_PX);
+
+	// Soft shadow.
+	ctx.fillStyle = 'rgba(0,0,0,0.28)';
+	ctx.beginPath();
+	ctx.ellipse(TILE_PX / 2, TILE_PX - 4, TILE_PX / 3, 3, 0, 0, Math.PI * 2);
+	ctx.fill();
+
+	// Stem and leaf.
+	ctx.fillStyle = '#3a8050';
+	ctx.fillRect(TILE_PX / 2 - 2, 16, 4, 14);
+	ctx.fillRect(TILE_PX / 2 - 8, 22, 6, 3);
+
+	// Flicker between red/yellow tulips based on tile coords so each is consistent.
+	const yellow = (tulip.x + tulip.y) % 2 === 0;
+	ctx.fillStyle = yellow ? '#f6c177' : '#eb6f92';
+	ctx.fillRect(TILE_PX / 2 - 6, 8, 4, 10);
+	ctx.fillRect(TILE_PX / 2 + 2, 8, 4, 10);
+	ctx.fillRect(TILE_PX / 2 - 2, 6, 4, 12);
+	ctx.fillStyle = yellow ? '#eb6f92' : '#f6c177';
+	ctx.fillRect(TILE_PX / 2 - 2, 9, 4, 4);
+
+	// Pulse a glow ring when about to vanish.
+	if (lifeT > wiltStart) {
+		const pulse = (Math.sin(now / 90) + 1) / 2;
+		ctx.strokeStyle = `rgba(246, 193, 119, ${0.4 + pulse * 0.4})`;
+		ctx.lineWidth = 2;
+		ctx.strokeRect(2, 2, TILE_PX - 4, TILE_PX - 4);
+	}
+
+	ctx.restore();
 }
 
 function drawPlaceCursor(ctx: CanvasRenderingContext2D, cursor: PlaceCursor, now: number) {
@@ -275,6 +409,51 @@ function drawPlot(ctx: CanvasRenderingContext2D, plot: PlotDef, state: PlotState
 		drawRosePlot(ctx, plot.x, plot.y, state);
 	} else if (plot.kind === 'lavender') {
 		drawLavenderPlot(ctx, plot.x, plot.y, state);
+	} else if (plot.kind === 'bluebonnet') {
+		drawBluebonnetPlot(ctx, plot.x, plot.y, state);
+	}
+}
+
+function drawBluebonnetPlot(
+	ctx: CanvasRenderingContext2D,
+	x: number,
+	y: number,
+	state: PlotState | undefined
+) {
+	const px = x * TILE_PX;
+	const py = y * TILE_PX;
+	// Soil inset over the rose-plot tile.
+	ctx.fillStyle = '#3d2a1c';
+	ctx.fillRect(px + 3, py + 3, TILE_PX - 6, TILE_PX - 6);
+
+	if (!state || state.stage === 'empty') return;
+
+	if (state.stage === 'seeded') {
+		ctx.fillStyle = '#d9c089';
+		ctx.fillRect(px + 16, py + 18, 4, 4);
+		ctx.fillRect(px + 12, py + 22, 3, 3);
+		ctx.fillRect(px + 22, py + 22, 3, 3);
+		return;
+	}
+	if (state.stage === 'sprout') {
+		ctx.fillStyle = '#3a8050';
+		ctx.fillRect(px + 16, py + 14, 4, 12);
+		ctx.fillRect(px + 12, py + 18, 4, 4);
+		ctx.fillRect(px + 20, py + 18, 4, 4);
+		return;
+	}
+	if (state.stage === 'bloomed') {
+		// A planted bluebonnet — looks like the decorative tile but soil-rooted.
+		ctx.fillStyle = '#3a8050';
+		ctx.fillRect(px + 17, py + 20, 3, 10);
+		ctx.fillStyle = '#3b5fa6';
+		ctx.fillRect(px + 14, py + 8, 8, 16);
+		ctx.fillStyle = '#6a8ed6';
+		ctx.fillRect(px + 15, py + 10, 6, 4);
+		ctx.fillRect(px + 15, py + 16, 6, 3);
+		ctx.fillStyle = '#e0def4';
+		ctx.fillRect(px + 16, py + 10, 2, 2);
+		ctx.fillRect(px + 19, py + 16, 2, 2);
 	}
 }
 

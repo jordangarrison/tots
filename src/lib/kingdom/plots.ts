@@ -32,7 +32,7 @@ export function advance(state: PlotState, kind: PlotKind, now: number): PlotStat
 
 function step(state: PlotState, kind: PlotKind, now: number): PlotState | null {
 	const elapsed = now - state.stageStartedAt;
-	if (kind === 'rose') {
+	if (kind === 'rose' || kind === 'bluebonnet') {
 		if (state.stage === 'seeded' && elapsed >= STAGE_DURATIONS_MS.seeded) {
 			return { stage: 'sprout', stageStartedAt: state.stageStartedAt + STAGE_DURATIONS_MS.seeded };
 		}
@@ -60,5 +60,6 @@ export function harvest(): PlotState | null {
 export function isHarvestable(state: PlotState | undefined, kind: PlotKind): boolean {
 	if (kind === 'rose') return state?.stage === 'bloomed';
 	if (kind === 'lavender') return !state || state.stage === 'empty';
+	// Bluebonnets are never harvested — Queen Mommy says no picking!
 	return false;
 }

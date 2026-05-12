@@ -8,6 +8,8 @@ const S: TileKind = 'stone';
 const A: TileKind = 'water';
 const R: TileKind = 'rose-plot';
 const L: TileKind = 'lavender';
+const N: TileKind = 'bluebonnet';
+const K: TileKind = 'seed-bin';
 const D: TileKind = 'sand';
 const W: TileKind = 'wall';
 const O: TileKind = 'wood-floor';
@@ -29,13 +31,13 @@ const courtyard: AreaDef = {
 	tiles: grid([
 		[T, T, T, T, T, T, T, P, T, T, T, T, T, T, T, T],
 		[T, G, G, G, G, G, G, G, G, G, G, G, G, G, G, T],
-		[T, G, G, G, G, G, G, G, G, G, G, G, G, G, G, T],
+		[P, G, G, G, G, G, G, G, G, G, G, G, G, G, G, T],
 		[T, G, G, G, G, P, S, S, P, G, G, G, G, G, G, T],
 		[T, G, G, G, G, S, A, A, S, G, G, G, G, G, G, P],
 		[P, G, G, G, G, S, A, A, S, G, G, G, G, G, G, T],
 		[T, G, G, G, G, P, S, S, P, G, G, G, G, G, G, T],
 		[T, G, G, G, G, G, G, G, G, G, G, G, G, G, G, T],
-		[T, G, G, G, G, G, G, G, G, G, G, G, G, G, G, T],
+		[T, G, G, G, G, G, G, G, G, G, G, G, G, G, G, P],
 		[T, G, G, G, G, G, G, G, G, G, G, G, G, G, G, T],
 		[T, T, T, T, T, T, T, P, T, T, T, T, T, T, T, T]
 	]),
@@ -43,13 +45,24 @@ const courtyard: AreaDef = {
 		{ x: 7, y: 0, toArea: 'rose-garden', toX: 7, toY: 8, label: "Jane's Rose Garden" },
 		{ x: 0, y: 5, toArea: 'lavender-meadow', toX: 12, toY: 5, label: "Isla's Lavender Meadow" },
 		{ x: 15, y: 4, toArea: 'pond', toX: 1, toY: 4, label: "Ollie's Pond" },
+		{
+			x: 0,
+			y: 2,
+			toArea: 'bluebonnet-garden',
+			toX: 12,
+			toY: 5,
+			label: "Mommy's Bluebonnet Garden"
+		},
+		{ x: 15, y: 8, toArea: 'tulip-garden', toX: 1, toY: 5, label: "Daddy's Tulip Garden" },
 		{ x: 7, y: 10, toArea: 'cottage', toX: 4, toY: 1, label: 'Your Cottage' }
 	],
 	plots: [],
 	npcs: [
 		{ id: 'jane', x: 11, y: 2 },
 		{ id: 'isla', x: 2, y: 3 },
-		{ id: 'ollie', x: 12, y: 8 }
+		{ id: 'ollie', x: 12, y: 8 },
+		{ id: 'mommy', x: 3, y: 2 },
+		{ id: 'daddy', x: 13, y: 8 }
 	],
 	welcome: 'Hello, neighbor. Welcome to the Kingdom.'
 };
@@ -140,6 +153,63 @@ const pond: AreaDef = {
 	welcome: 'Face the water and press SPACE to cast. Wait for a bite!'
 };
 
+const bluebonnetGarden: AreaDef = {
+	id: 'bluebonnet-garden',
+	name: "Mommy's Bluebonnet Garden",
+	accent: 'var(--rp-foam)',
+	width: 14,
+	height: 10,
+	tiles: grid([
+		[T, T, T, T, T, T, T, T, T, T, T, T, T, T],
+		[T, N, G, N, G, G, N, G, G, N, G, N, G, T],
+		[T, G, G, G, G, G, G, G, G, G, G, G, G, T],
+		[T, G, R, G, R, G, G, R, G, R, G, G, K, T],
+		[T, G, G, G, G, G, G, G, G, G, G, G, G, T],
+		[T, G, G, G, G, G, G, G, G, G, G, G, G, P],
+		[T, G, G, G, G, G, G, G, G, G, G, G, G, T],
+		[T, G, R, G, R, G, G, R, G, R, G, G, G, T],
+		[T, N, G, N, G, G, N, G, G, N, G, N, G, T],
+		[T, T, T, T, T, T, T, T, T, T, T, T, T, T]
+	]),
+	doors: [{ x: 13, y: 5, toArea: 'courtyard', toX: 1, toY: 2, label: 'Castle Courtyard' }],
+	plots: [
+		{ id: 'bluebonnet-1', x: 2, y: 3, kind: 'bluebonnet' },
+		{ id: 'bluebonnet-2', x: 4, y: 3, kind: 'bluebonnet' },
+		{ id: 'bluebonnet-3', x: 7, y: 3, kind: 'bluebonnet' },
+		{ id: 'bluebonnet-4', x: 9, y: 3, kind: 'bluebonnet' },
+		{ id: 'bluebonnet-5', x: 2, y: 7, kind: 'bluebonnet' },
+		{ id: 'bluebonnet-6', x: 4, y: 7, kind: 'bluebonnet' },
+		{ id: 'bluebonnet-7', x: 7, y: 7, kind: 'bluebonnet' },
+		{ id: 'bluebonnet-8', x: 9, y: 7, kind: 'bluebonnet' }
+	],
+	npcs: [{ id: 'mommy', x: 6, y: 5 }],
+	welcome: 'Grab seeds from the bin, then plant them. No picking the bluebonnets!'
+};
+
+const tulipGarden: AreaDef = {
+	id: 'tulip-garden',
+	name: "Daddy's Tulip Garden",
+	accent: 'var(--rp-gold)',
+	width: 14,
+	height: 10,
+	tiles: grid([
+		[T, T, T, T, T, T, T, T, T, T, T, T, T, T],
+		[T, G, G, G, G, G, G, G, G, G, G, G, G, T],
+		[T, G, G, G, G, G, G, G, G, G, G, G, G, T],
+		[T, G, G, G, G, G, G, G, G, G, G, G, G, T],
+		[T, G, G, G, G, G, G, G, G, G, G, G, G, T],
+		[P, G, G, G, G, G, G, G, G, G, G, G, G, T],
+		[T, G, G, G, G, G, G, G, G, G, G, G, G, T],
+		[T, G, G, G, G, G, G, G, G, G, G, G, G, T],
+		[T, G, G, G, G, G, G, G, G, G, G, G, G, T],
+		[T, T, T, T, T, T, T, T, T, T, T, T, T, T]
+	]),
+	doors: [{ x: 0, y: 5, toArea: 'courtyard', toX: 14, toY: 8, label: 'Castle Courtyard' }],
+	plots: [],
+	npcs: [{ id: 'daddy', x: 7, y: 5 }],
+	welcome: 'Tulips pop up around the garden — grab them fast before they vanish!'
+};
+
 const cottage: AreaDef = {
 	id: 'cottage',
 	name: 'Your Cottage',
@@ -166,6 +236,8 @@ export const areas: Record<AreaId, AreaDef> = {
 	courtyard,
 	'rose-garden': roseGarden,
 	'lavender-meadow': lavenderMeadow,
+	'bluebonnet-garden': bluebonnetGarden,
+	'tulip-garden': tulipGarden,
 	pond,
 	cottage
 };

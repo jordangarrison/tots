@@ -8,10 +8,13 @@
 	import { advance, isHarvestable, pickLavender, plant } from '../plots';
 	import { writeSave } from '../save';
 	import { TILE_PX, areaPixelSize, draw } from '../render';
-	import type { PlaceCursor } from '../render';
+	import type { PlaceCursor, WildTulip } from '../render';
 	import TextBubble from './TextBubble.svelte';
 
 	const CAST_MS = 3500;
+	const TULIP_LIFETIME_MS = 7000;
+	const TULIP_SPAWN_EVERY_MS = 1800;
+	const TULIP_MAX_ACTIVE = 4;
 
 	export let initialState: SaveState;
 	export let onExit: () => void;
@@ -44,16 +47,20 @@
 	// cottage floor. Per-session UI state only — no need to persist.
 	let placeMode: { itemId: ItemId } | null = null;
 
-	const ITEM_ORDER: ItemId[] = ['rose', 'lavender', 'fish'];
+	const ITEM_ORDER: ItemId[] = ['rose', 'lavender', 'fish', 'tulip', 'seed'];
 	const ITEM_LABEL: Record<ItemId, string> = {
 		rose: '🌹 Rose',
 		lavender: '💜 Lavender',
-		fish: '🐟 Fish'
+		fish: '🐟 Fish',
+		tulip: '🌷 Tulip',
+		seed: '🌱 Seed'
 	};
 	const ITEM_ACCENT: Record<ItemId, string> = {
 		rose: 'var(--rp-love)',
 		lavender: 'var(--rp-iris)',
-		fish: 'var(--rp-foam)'
+		fish: 'var(--rp-foam)',
+		tulip: 'var(--rp-gold)',
+		seed: 'var(--rp-pine)'
 	};
 
 	const KEY_TO_DIR: Record<string, Facing> = {
@@ -120,6 +127,10 @@
 		state.playerX = toX;
 		state.playerY = toY;
 		if (areaId !== 'cottage') placeMode = null;
+		// Wild tulips are per-area: clear them whenever we leave the tulip garden,
+		// and seed a fresh batch when we arrive.
+		wildTulips = [];
+		lastTulipSpawnAt = areaId === 'tulip-garden' ? performance.now() : 0;
 		if (!state.visitedAreas.includes(areaId)) {
 			state.visitedAreas = [...state.visitedAreas, areaId];
 			showBubble(areas[areaId].welcome, areas[areaId].accent, 4200);
@@ -131,8 +142,14 @@
 	const NPC_HELLOS: Record<string, string> = {
 		jane: 'Hello, neighbor! Care to plant a rose with me?',
 		isla: 'Hello, neighbor! The lavender smells so good today.',
-		ollie: '*happy tail wag* Wanna go fishing?'
+		ollie: '*happy tail wag* Wanna go fishing?',
+		mommy: 'Welcome, little one! Grab seeds from the bin and plant them — but no picking!',
+		daddy: 'Quick — the tulips never stay long! Catch one before it vanishes.'
 	};
+
+	// Transient (per-session) tulip patches in Daddy's garden.
+	let wildTulips: WildTulip[] = [];
+	let lastTulipSpawnAt = 0;
 
 	function decorAt(x: number, y: number): PlacedDecor | null {
 		return (
@@ -188,10 +205,7 @@
 			return;
 		}
 		state.inventory[id] -= 1;
-		state.placedDecor = [
-			...state.placedDecor,
-			{ areaId: 'cottage', x, y, itemId: id }
-		];
+		state.placedDecor = [...state.placedDecor, { areaId: 'cottage', x, y, itemId: id }];
 		state = state;
 		persist();
 		// If we ran out of this item, auto-swap to the next available so the
@@ -236,6 +250,15 @@
 			return;
 		}
 
+		// Daddy's garden: grab a wild tulip before it disappears.
+		if (state.areaId === 'tulip-garden') {
+			const wild = wildTulipAt(tx, ty);
+			if (wild) {
+				pickWildTulip(wild);
+				return;
+			}
+		}
+
 		const door = doorAt(area, tx, ty);
 		if (door) {
 			if (door.comingSoon) {
@@ -264,11 +287,23 @@
 				interactLavender(plot.id);
 				return;
 			}
+			if (plot.kind === 'bluebonnet') {
+				interactBluebonnet(plot.id);
+				return;
+			}
 		}
 
 		const tile = tileAt(area, tx, ty);
 		if (tile === 'water') {
 			startCasting();
+			return;
+		}
+		if (tile === 'seed-bin') {
+			collectSeed();
+			return;
+		}
+		if (tile === 'bluebonnet') {
+			showBubble("Mommy's bluebonnets are for looking, not picking.", 'var(--rp-foam)');
 			return;
 		}
 	}
@@ -310,6 +345,70 @@
 		showBubble('Lavender is regrowing...', 'var(--rp-iris)');
 	}
 
+	function interactBluebonnet(plotId: string) {
+		const ps = state.plots[plotId];
+		if (!ps || ps.stage === 'empty') {
+			if (state.inventory.seed <= 0) {
+				showBubble('Grab seeds from the bin first!', 'var(--rp-pine)');
+				return;
+			}
+			state.inventory.seed -= 1;
+			state.plots[plotId] = plant(performance.now());
+			state = state;
+			showBubble('🌱 You planted a bluebonnet seed.', 'var(--rp-foam)');
+			persist();
+			return;
+		}
+		if (ps.stage === 'seeded') {
+			showBubble('Tiny sprout coming soon...', 'var(--rp-gold)');
+			return;
+		}
+		if (ps.stage === 'sprout') {
+			showBubble('Almost bluebonnet time...', 'var(--rp-gold)');
+			return;
+		}
+		showBubble('A pretty bluebonnet — no picking!', 'var(--rp-foam)');
+	}
+
+	function collectSeed() {
+		state.inventory.seed += 1;
+		state = state;
+		showBubble('🌱 Picked up a bluebonnet seed.', 'var(--rp-pine)');
+		persist();
+	}
+
+	function wildTulipAt(x: number, y: number): WildTulip | null {
+		return wildTulips.find((t) => t.x === x && t.y === y) ?? null;
+	}
+
+	function pickWildTulip(tulip: WildTulip) {
+		wildTulips = wildTulips.filter((t) => t !== tulip);
+		state.inventory.tulip += 1;
+		state = state;
+		showBubble('🌷 You grabbed a tulip!', 'var(--rp-gold)');
+		persist();
+	}
+
+	function spawnTulip(now: number) {
+		if (state.areaId !== 'tulip-garden') return;
+		if (wildTulips.length >= TULIP_MAX_ACTIVE) return;
+		const candidates: { x: number; y: number }[] = [];
+		for (let y = 0; y < area.height; y++) {
+			for (let x = 0; x < area.width; x++) {
+				if (tileAt(area, x, y) !== 'grass') continue;
+				if (npcAt(area, x, y)) continue;
+				if (doorAt(area, x, y)) continue;
+				if (x === state.playerX && y === state.playerY) continue;
+				if (wildTulips.some((t) => t.x === x && t.y === y)) continue;
+				candidates.push({ x, y });
+			}
+		}
+		if (candidates.length === 0) return;
+		const pick = candidates[Math.floor(Math.random() * candidates.length)];
+		const lifetimeMs = TULIP_LIFETIME_MS + Math.floor(Math.random() * 3000);
+		wildTulips = [...wildTulips, { x: pick.x, y: pick.y, spawnedAt: now, lifetimeMs }];
+	}
+
 	function startCasting() {
 		casting = { startedAt: performance.now() };
 		showBubble('🎣 Casting...', 'var(--rp-foam)', CAST_MS + 200);
@@ -338,6 +437,8 @@
 
 		if (decorAt(tx, ty)) return '▶ Pick up';
 
+		if (state.areaId === 'tulip-garden' && wildTulipAt(tx, ty)) return '▶ Grab tulip!';
+
 		const door = doorAt(area, tx, ty);
 		if (door) return door.comingSoon ? `🚧 ${door.label}` : `▶ ${door.label}`;
 
@@ -356,10 +457,18 @@
 				if (isHarvestable(ps, 'lavender')) return '▶ Pick lavender';
 				return '▶ Regrowing...';
 			}
+			if (plot.kind === 'bluebonnet') {
+				if (!ps || ps.stage === 'empty')
+					return state.inventory.seed > 0 ? '▶ Plant a seed' : '✗ Need a seed';
+				if (ps.stage === 'bloomed') return '▶ Look (no picking)';
+				return '▶ Growing...';
+			}
 		}
 
 		const tile = tileAt(area, tx, ty);
 		if (tile === 'water') return '▶ Cast line';
+		if (tile === 'seed-bin') return '▶ Take a seed';
+		if (tile === 'bluebonnet') return '▶ Look (no picking)';
 
 		return null;
 	}
@@ -445,6 +554,21 @@
 			finishCasting();
 		}
 
+		// Tulip garden — expire stale tulips, then spawn new ones on a steady cadence.
+		if (state.areaId === 'tulip-garden') {
+			const before = wildTulips.length;
+			wildTulips = wildTulips.filter((t) => now - t.spawnedAt < t.lifetimeMs);
+			if (wildTulips.length !== before) {
+				wildTulips = wildTulips;
+			}
+			if (now - lastTulipSpawnAt >= TULIP_SPAWN_EVERY_MS) {
+				spawnTulip(now);
+				lastTulipSpawnAt = now;
+			}
+		} else if (wildTulips.length > 0) {
+			wildTulips = [];
+		}
+
 		if (bubble && now >= bubble.expiresAt) bubble = null;
 		interactHint = computeInteractHint();
 
@@ -462,6 +586,7 @@
 				},
 				placedDecor: state.placedDecor,
 				placeCursor: placeCursor(),
+				wildTulips,
 				now
 			});
 		}
@@ -491,10 +616,10 @@
 			placeMode = null;
 			return;
 		}
-		if (placeMode && (e.key === '1' || e.key === '2' || e.key === '3')) {
+		if (placeMode && /^[1-9]$/.test(e.key)) {
 			const idx = Number(e.key) - 1;
 			const id = ITEM_ORDER[idx];
-			if (state.inventory[id] > 0) {
+			if (id && state.inventory[id] > 0) {
 				e.preventDefault();
 				selectItem(id);
 			}
@@ -527,6 +652,11 @@
 			showBubble(area.welcome, area.accent, 4200);
 		}
 
+		// If a previous save dropped us in the tulip garden, prime the spawn clock.
+		if (state.areaId === 'tulip-garden') {
+			lastTulipSpawnAt = performance.now();
+		}
+
 		window.addEventListener('keydown', onKeyDown);
 		window.addEventListener('keyup', onKeyUp);
 		raf = requestAnimationFrame(tick);
@@ -550,6 +680,8 @@
 			<span class="inventory rose" title="Roses picked">🌹 {state.inventory.rose}</span>
 			<span class="inventory lavender" title="Lavender picked">💜 {state.inventory.lavender}</span>
 			<span class="inventory fish" title="Fish caught">🐟 {state.inventory.fish}</span>
+			<span class="inventory tulip" title="Tulips grabbed">🌷 {state.inventory.tulip}</span>
+			<span class="inventory seed" title="Bluebonnet seeds">🌱 {state.inventory.seed}</span>
 		</div>
 	</header>
 
@@ -693,7 +825,9 @@
 
 	.inventory-row {
 		display: flex;
-		gap: 0.4rem;
+		flex-wrap: wrap;
+		justify-content: flex-end;
+		gap: 0.3rem;
 	}
 
 	.inventory {
@@ -718,6 +852,16 @@
 	.inventory.fish {
 		border-color: var(--rp-foam);
 		box-shadow: 0 0 8px var(--rp-foam);
+	}
+
+	.inventory.tulip {
+		border-color: var(--rp-gold);
+		box-shadow: 0 0 8px var(--rp-gold);
+	}
+
+	.inventory.seed {
+		border-color: var(--rp-pine);
+		box-shadow: 0 0 8px var(--rp-pine);
 	}
 
 	.picker {
@@ -815,9 +959,7 @@
 		max-width: 100%;
 		max-height: 60vh;
 		border: 3px solid var(--accent);
-		box-shadow:
-			0 0 0 2px var(--rp-base),
-			0 0 20px var(--accent);
+		box-shadow: 0 0 0 2px var(--rp-base), 0 0 20px var(--accent);
 	}
 
 	canvas:focus-visible {
@@ -884,10 +1026,22 @@
 		color: var(--rp-base);
 	}
 
-	.db.up { left: 40px; top: 0; }
-	.db.down { left: 40px; top: 80px; }
-	.db.left { left: 0; top: 40px; }
-	.db.right { left: 80px; top: 40px; }
+	.db.up {
+		left: 40px;
+		top: 0;
+	}
+	.db.down {
+		left: 40px;
+		top: 80px;
+	}
+	.db.left {
+		left: 0;
+		top: 40px;
+	}
+	.db.right {
+		left: 80px;
+		top: 40px;
+	}
 
 	.action {
 		width: 64px;
@@ -909,6 +1063,8 @@
 	}
 
 	@media (min-width: 720px) and (pointer: fine) {
-		.touch-controls { display: none; }
+		.touch-controls {
+			display: none;
+		}
 	}
 </style>
