@@ -221,18 +221,18 @@
 		ctx.fillStyle = '#ffffff';
 		ctx.fillRect(0, 0, width, height);
 
+		ctx.drawImage(drawCanvas, 0, 0);
+
+		ctx.globalCompositeOperation = 'multiply';
+		ctx.drawImage(bgCanvas, 0, 0);
+		ctx.globalCompositeOperation = 'source-over';
+
 		for (const slot of slots) {
 			if (slot.kind === 'image') {
 				const val = slotValues[slot.id] ?? '';
 				await rasterImageSlot(ctx, slot, val);
 			}
 		}
-
-		ctx.drawImage(drawCanvas, 0, 0);
-
-		ctx.globalCompositeOperation = 'multiply';
-		ctx.drawImage(bgCanvas, 0, 0);
-		ctx.globalCompositeOperation = 'source-over';
 
 		for (const slot of slots) {
 			if (slot.kind === 'text') {
