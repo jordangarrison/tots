@@ -124,13 +124,21 @@
 		targetNonce++;
 	}
 
-	function toggleAudio() {
-		audioOn = !audioOn;
-		setAudioEnabled(audioOn);
-		if (audioOn) {
-			unlockSpeech();
-			if (currentChar) speakChar(currentChar);
+	// Single button serves as both "say it again" (when audio on) and
+	// toggle-on (when audio off). Long-press to mute is overkill for kids, so
+	// we use a discreet secondary control to disable.
+	function sayOrEnable() {
+		unlockSpeech();
+		if (!audioOn) {
+			audioOn = true;
+			setAudioEnabled(true);
 		}
+		if (currentChar) speakChar(currentChar);
+	}
+
+	function muteAudio() {
+		audioOn = false;
+		setAudioEnabled(false);
 	}
 
 	$: cursor, void scrollCursor();
@@ -142,6 +150,12 @@
 	onMount(() => {
 		audioOn = audioEnabled();
 		window.addEventListener('keydown', handleKey);
+		// Best-effort: speak the first target. After the user clicked the lesson
+		// card to get here, browsers still consider the page within a user
+		// gesture window for a few seconds, so this usually plays.
+		if (audioOn && currentChar) {
+			window.setTimeout(() => speakChar(currentChar as string), 250);
+		}
 	});
 	onDestroy(() => {
 		if (typeof window !== 'undefined') window.removeEventListener('keydown', handleKey);
@@ -171,14 +185,13 @@
 					style="width: {targets.length ? (cursor / targets.length) * 100 : 0}%"
 				/>
 			</div>
-			<button
-				class="audio"
-				class:off={!audioOn}
-				on:click={toggleAudio}
-				aria-label={audioOn ? 'Turn sound off' : 'Turn sound on'}
-			>
-				{audioOn ? '🔊' : '🔇'}
+			<button class="audio" on:click={sayOrEnable} aria-label="Say the letter">
+				<span class="audio-icon">{audioOn ? '🔊' : '🔇'}</span>
+				<span class="audio-label">SAY</span>
 			</button>
+			{#if audioOn}
+				<button class="mute" on:click={muteAudio} aria-label="Mute sound">✕</button>
+			{/if}
 		</div>
 	</header>
 
@@ -323,22 +336,40 @@
 	}
 
 	.audio {
-		background: transparent;
+		display: inline-flex;
+		align-items: center;
+		gap: 0.3rem;
+		background: var(--rp-foam);
 		border: 2px solid var(--rp-foam);
-		color: var(--rp-foam);
-		font-size: 1.05rem;
-		padding: 0.15rem 0.4rem;
-		border-radius: 3px;
+		color: var(--rp-base);
+		font-family: 'Press Start 2P', cursive;
+		font-size: 0.55rem;
+		padding: 0.35rem 0.5rem;
+		border-radius: 4px;
 		cursor: pointer;
-		text-shadow: 0 0 4px var(--rp-foam);
+		letter-spacing: 0.15em;
+		box-shadow: 0 0 8px var(--rp-foam);
 	}
-	.audio.off {
-		border-color: var(--rp-muted);
-		color: var(--rp-muted);
-		text-shadow: none;
+	.audio-icon {
+		font-size: 0.9rem;
 	}
 	.audio:hover {
-		box-shadow: 0 0 8px currentColor;
+		box-shadow: 0 0 14px var(--rp-foam);
+	}
+
+	.mute {
+		background: transparent;
+		border: 1.5px solid var(--rp-muted);
+		color: var(--rp-muted);
+		font-family: 'Press Start 2P', cursive;
+		font-size: 0.55rem;
+		padding: 0.25rem 0.4rem;
+		border-radius: 3px;
+		cursor: pointer;
+	}
+	.mute:hover {
+		border-color: var(--rp-love);
+		color: var(--rp-love);
 	}
 
 	.stage {

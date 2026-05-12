@@ -20,7 +20,10 @@
 	function toggleAudio() {
 		audioOn = !audioOn;
 		setAudioEnabled(audioOn);
-		if (audioOn) speak('audio on');
+		if (audioOn) {
+			unlockSpeech();
+			speak('Sound on!');
+		}
 	}
 
 	function handleKey(e: KeyboardEvent) {
@@ -50,7 +53,7 @@
 		speakChar(pressed);
 		const a = assocFor(pressed);
 		if (a) {
-			window.setTimeout(() => speak(a.word, { rate: 0.9, pitch: 1.15, queue: true }), 350);
+			window.setTimeout(() => speak(a.word, { rate: 0.9, pitch: 1.15 }), 350);
 		}
 	}
 
@@ -75,7 +78,8 @@
 			on:click={toggleAudio}
 			aria-label={audioOn ? 'Turn sound off' : 'Turn sound on'}
 		>
-			{audioOn ? '🔊' : '🔇'}
+			<span class="audio-icon">{audioOn ? '🔊' : '🔇'}</span>
+			<span class="audio-label">{audioOn ? 'ON' : 'OFF'}</span>
 		</button>
 	</header>
 
@@ -142,13 +146,25 @@
 	}
 
 	.audio {
-		color: var(--rp-foam);
-		font-size: 1.1rem;
-		padding: 0.2rem 0.45rem;
+		display: inline-flex;
+		align-items: center;
+		gap: 0.3rem;
+		background: var(--rp-foam);
+		border-color: var(--rp-foam);
+		color: var(--rp-base);
+		font-size: 0.55rem;
+		padding: 0.35rem 0.5rem;
+		text-shadow: none;
+		box-shadow: 0 0 8px var(--rp-foam);
+	}
+	.audio-icon {
+		font-size: 0.9rem;
 	}
 	.audio.off {
+		background: transparent;
 		color: var(--rp-muted);
-		text-shadow: none;
+		border-color: var(--rp-muted);
+		box-shadow: none;
 	}
 	.back:hover,
 	.audio:hover {

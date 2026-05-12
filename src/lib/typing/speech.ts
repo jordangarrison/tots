@@ -1,16 +1,11 @@
-// Tiny wrapper around the Web Speech API so the typing teacher can read
-// letters and words out loud — critical for pre-reading kids. Everything
-// silently no-ops when the API is unavailable (older browsers, SSR).
+// Tiny wrapper around the Web Speech API.
 //
-// Browser autoplay rules require that the FIRST speech call happen inside a
-// user-gesture handler (click / keydown). We therefore:
-//   • never speak from onMount / setTimeout / promise continuations,
-//   • call unlockSpeech() at the start of every gesture handler before speak(),
-//   • keep the speak() function fully synchronous so the call stays inside
-//     the gesture.
-//
-// We deliberately do NOT await `voiceschanged`. Browsers play with the default
-// voice if none is selected, which is fine — the audio still happens.
+// Browser autoplay rules require the FIRST speech call to start synchronously
+// inside a user-gesture handler (click / keydown). We therefore keep `speak()`
+// fully synchronous and trust the call site to invoke it from a real gesture.
+// We do NOT cancel previous utterances by default — letting them play out
+// avoids racing the unlock and is fine in practice because utterances are
+// very short (a single letter).
 
 const SETTINGS_KEY = 'tots.typing.audio.v1';
 
@@ -22,8 +17,8 @@ export function audioEnabled(): boolean {
 	if (typeof window === 'undefined') return true;
 	try {
 		const raw = window.localStorage.getItem(SETTINGS_KEY);
-		// Default ON — the youngest learners need it most.
-		return raw === null ? true : raw === 'on';
+		// Default ON. Pre-readers need it.
+		return raw !== 'off';
 	} catch {
 		return true;
 	}
@@ -34,25 +29,14 @@ export function setAudioEnabled(on: boolean): void {
 	try {
 		window.localStorage.setItem(SETTINGS_KEY, on ? 'on' : 'off');
 	} catch {
-		// privacy mode / quota — fall through
+		// quota / privacy mode — fall through
 	}
-	if (!on && isSupported()) window.speechSynthesis.cancel();
-}
-
-let unlocked = false;
-
-/** Call from a keydown/click handler to unlock speech on Safari/Chrome. */
-export function unlockSpeech(): void {
-	if (!isSupported() || unlocked) return;
-	try {
-		// Some browsers leave the engine in a paused state until you nudge it.
-		window.speechSynthesis.resume();
-		const u = new SpeechSynthesisUtterance(' ');
-		u.volume = 0;
-		window.speechSynthesis.speak(u);
-		unlocked = true;
-	} catch {
-		// noop
+	if (!on && isSupported()) {
+		try {
+			window.speechSynthesis.cancel();
+		} catch {
+			// noop
+		}
 	}
 }
 
@@ -60,6 +44,7 @@ function pickVoice(): SpeechSynthesisVoice | null {
 	if (!isSupported()) return null;
 	const voices = window.speechSynthesis.getVoices();
 	if (!voices.length) return null;
+	// Any English voice will do. Prefer a friendlier name if present.
 	const preferred = [
 		/karen/i,
 		/samantha/i,
@@ -78,18 +63,18 @@ function pickVoice(): SpeechSynthesisVoice | null {
 interface SpeakOptions {
 	rate?: number;
 	pitch?: number;
-	/** If true, queue this speech behind any current utterance. Default cancels. */
-	queue?: boolean;
+	/** If true, queue this utterance. By default we also queue (don't cancel). */
+	interrupt?: boolean;
 }
 
-/** Synchronously speak text. Must be called from a user gesture handler. */
+/** Speak text. MUST be called from a user-gesture handler the first time. */
 export function speak(text: string, opts: SpeakOptions = {}): void {
 	if (!isSupported() || !audioEnabled() || !text) return;
 	try {
 		const synth = window.speechSynthesis;
-		if (!opts.queue) synth.cancel();
-		// Chrome sometimes leaves the queue paused after cancel(); resume() is harmless.
+		// Chrome occasionally pauses the queue (esp. after long idle); resume is harmless.
 		synth.resume();
+		if (opts.interrupt) synth.cancel();
 		const u = new SpeechSynthesisUtterance(text);
 		u.rate = opts.rate ?? 0.95;
 		u.pitch = opts.pitch ?? 1.15;
@@ -97,6 +82,16 @@ export function speak(text: string, opts: SpeakOptions = {}): void {
 		const voice = pickVoice();
 		if (voice) u.voice = voice;
 		synth.speak(u);
+	} catch {
+		// noop
+	}
+}
+
+/** No-op marker kept so callers don't break; speech unlocks itself via speak(). */
+export function unlockSpeech(): void {
+	if (!isSupported()) return;
+	try {
+		window.speechSynthesis.resume();
 	} catch {
 		// noop
 	}
@@ -145,5 +140,6 @@ export function speakChar(char: string): void {
 						: char.toUpperCase();
 			else phrase = char;
 	}
-	speak(phrase, { rate: 0.9, pitch: 1.2 });
+	// Interrupt previous letter so rapid typing doesn't queue up stale speech.
+	speak(phrase, { rate: 0.9, pitch: 1.2, interrupt: true });
 }
