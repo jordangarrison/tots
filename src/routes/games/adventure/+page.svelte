@@ -1,10 +1,10 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
-	import { characters } from '$lib/adventure/characters';
-	import type { CharacterId } from '$lib/adventure/types';
+	import { characters } from '$lib/characters';
+	import type { CharacterId } from '$lib/characters';
 	import { stories, getStory } from '$lib/adventure/stories';
 	import StoryPicker from '$lib/adventure/components/StoryPicker.svelte';
-	import CharacterPicker from '$lib/adventure/components/CharacterPicker.svelte';
+	import CharacterPicker from '$lib/characters/CharacterPicker.svelte';
 	import StoryPlayer from '$lib/adventure/components/StoryPlayer.svelte';
 
 	export const prerender = true;
@@ -44,7 +44,11 @@
 {#if storyId === null}
 	<StoryPicker {stories} onPick={pickStory} onBack={backToArcade} />
 {:else if characterId === null}
-	<CharacterPicker onPick={pickCharacter} onBack={backToStories} />
+	<CharacterPicker
+		prompt="WHO'S COMING ON THE ADVENTURE?"
+		onPick={pickCharacter}
+		onBack={backToStories}
+	/>
 {:else if chosenStory}
 	<StoryPlayer
 		story={chosenStory}

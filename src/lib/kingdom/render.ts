@@ -1,0 +1,228 @@
+import { characters } from '$lib/characters';
+import type { Character } from '$lib/characters';
+import type { AreaDef, Facing, PlotState, TileKind } from './types';
+
+export const TILE_PX = 36;
+
+const COLOR: Record<TileKind, string> = {
+	grass: '#4d6b3a',
+	path: '#9b8b6e',
+	sand: '#d4b483',
+	water: '#3b6e8a',
+	wall: '#3d3a52',
+	'flower-bed': '#6b3a52',
+	lavender: '#7a5a9c',
+	tree: '#27543c',
+	stone: '#6e6a86',
+	'rose-plot': '#5a3a25'
+};
+
+const GRID_LINE = 'rgba(0,0,0,0.18)';
+const DOOR_OUTLINE = '#f6c177';
+const PLAYER_RING = '#e0def4';
+
+export function areaPixelSize(area: AreaDef): { w: number; h: number } {
+	return { w: area.width * TILE_PX, h: area.height * TILE_PX };
+}
+
+interface DrawArgs {
+	ctx: CanvasRenderingContext2D;
+	area: AreaDef;
+	plots: Record<string, PlotState>;
+	player: { x: number; y: number; facing: Facing; character: Character };
+	now: number;
+}
+
+export function draw({ ctx, area, plots, player, now }: DrawArgs) {
+	const { w, h } = areaPixelSize(area);
+	ctx.fillStyle = '#191724';
+	ctx.fillRect(0, 0, w, h);
+
+	for (let y = 0; y < area.height; y++) {
+		for (let x = 0; x < area.width; x++) {
+			const kind = area.tiles[y * area.width + x];
+			drawTile(ctx, x, y, kind, now);
+		}
+	}
+
+	for (const plot of area.plots) {
+		const state = plots[plot.id];
+		drawPlot(ctx, plot.x, plot.y, state);
+	}
+
+	for (const door of area.doors) {
+		drawDoor(ctx, door.x, door.y, !!door.comingSoon);
+	}
+
+	for (const npc of area.npcs) {
+		if (npc.id === player.character.id) continue; // you're playing as them
+		const c = characters[npc.id];
+		drawCharacter(ctx, npc.x, npc.y, c.emoji, c.accent);
+	}
+
+	drawCharacter(ctx, player.x, player.y, player.character.emoji, PLAYER_RING, player.facing);
+}
+
+function drawTile(
+	ctx: CanvasRenderingContext2D,
+	x: number,
+	y: number,
+	kind: TileKind,
+	now: number
+) {
+	const px = x * TILE_PX;
+	const py = y * TILE_PX;
+	ctx.fillStyle = COLOR[kind];
+	ctx.fillRect(px, py, TILE_PX, TILE_PX);
+
+	switch (kind) {
+		case 'tree':
+			ctx.fillStyle = '#1a3a26';
+			ctx.fillRect(px + 4, py + 4, TILE_PX - 8, TILE_PX - 8);
+			ctx.fillStyle = '#3a8050';
+			ctx.fillRect(px + 8, py + 6, 6, 6);
+			ctx.fillRect(px + 18, py + 10, 6, 6);
+			ctx.fillRect(px + 12, py + 18, 6, 6);
+			ctx.fillRect(px + 22, py + 22, 6, 6);
+			break;
+		case 'water': {
+			const t = (now / 600) % 1;
+			ctx.fillStyle = 'rgba(255,255,255,0.10)';
+			const offset = Math.floor(t * TILE_PX);
+			ctx.fillRect(px, py + ((offset + 6) % TILE_PX), TILE_PX, 2);
+			ctx.fillRect(px, py + ((offset + 22) % TILE_PX), TILE_PX, 2);
+			break;
+		}
+		case 'flower-bed':
+			ctx.fillStyle = '#eb6f92';
+			ctx.fillRect(px + 6, py + 6, 6, 6);
+			ctx.fillRect(px + 22, py + 8, 6, 6);
+			ctx.fillRect(px + 14, py + 22, 6, 6);
+			ctx.fillStyle = '#f6c177';
+			ctx.fillRect(px + 10, py + 18, 4, 4);
+			break;
+		case 'lavender':
+			ctx.fillStyle = '#c4a7e7';
+			ctx.fillRect(px + 8, py + 4, 4, 8);
+			ctx.fillRect(px + 18, py + 8, 4, 10);
+			ctx.fillRect(px + 26, py + 6, 4, 8);
+			ctx.fillRect(px + 12, py + 20, 4, 10);
+			break;
+		case 'stone':
+			ctx.fillStyle = '#908caa';
+			ctx.fillRect(px + 4, py + 4, TILE_PX - 8, TILE_PX - 8);
+			ctx.fillStyle = '#6e6a86';
+			ctx.fillRect(px + 10, py + 12, 4, 4);
+			ctx.fillRect(px + 22, py + 20, 4, 4);
+			break;
+		case 'wall':
+			ctx.fillStyle = '#26233a';
+			ctx.fillRect(px + 1, py + 1, TILE_PX - 2, TILE_PX - 2);
+			ctx.fillStyle = '#524f67';
+			ctx.fillRect(px + 4, py + 4, 12, 12);
+			ctx.fillRect(px + 20, py + 4, 12, 12);
+			ctx.fillRect(px + 4, py + 20, 12, 12);
+			ctx.fillRect(px + 20, py + 20, 12, 12);
+			break;
+		case 'sand':
+			ctx.fillStyle = 'rgba(255,255,255,0.06)';
+			ctx.fillRect(px + 8, py + 10, 4, 2);
+			ctx.fillRect(px + 22, py + 24, 4, 2);
+			break;
+		case 'grass':
+			ctx.fillStyle = 'rgba(0,0,0,0.08)';
+			ctx.fillRect(px + 6, py + 24, 3, 4);
+			ctx.fillRect(px + 22, py + 8, 3, 4);
+			break;
+	}
+
+	ctx.strokeStyle = GRID_LINE;
+	ctx.lineWidth = 1;
+	ctx.strokeRect(px + 0.5, py + 0.5, TILE_PX - 1, TILE_PX - 1);
+}
+
+function drawPlot(
+	ctx: CanvasRenderingContext2D,
+	x: number,
+	y: number,
+	state: PlotState | undefined
+) {
+	const px = x * TILE_PX;
+	const py = y * TILE_PX;
+	ctx.fillStyle = '#3d2a1c';
+	ctx.fillRect(px + 3, py + 3, TILE_PX - 6, TILE_PX - 6);
+
+	if (!state || state.stage === 'empty') return;
+
+	if (state.stage === 'seeded') {
+		ctx.fillStyle = '#9b8b6e';
+		ctx.fillRect(px + 16, py + 18, 4, 4);
+		return;
+	}
+	if (state.stage === 'sprout') {
+		ctx.fillStyle = '#3a8050';
+		ctx.fillRect(px + 16, py + 12, 4, 10);
+		ctx.fillRect(px + 12, py + 14, 4, 4);
+		ctx.fillRect(px + 20, py + 14, 4, 4);
+		return;
+	}
+	if (state.stage === 'bloomed') {
+		ctx.fillStyle = '#3a8050';
+		ctx.fillRect(px + 16, py + 18, 4, 10);
+		ctx.fillStyle = '#eb6f92';
+		ctx.fillRect(px + 12, py + 8, 12, 12);
+		ctx.fillStyle = '#f6c177';
+		ctx.fillRect(px + 16, py + 12, 4, 4);
+	}
+}
+
+function drawDoor(ctx: CanvasRenderingContext2D, x: number, y: number, comingSoon: boolean) {
+	const px = x * TILE_PX;
+	const py = y * TILE_PX;
+	ctx.strokeStyle = comingSoon ? '#6e6a86' : DOOR_OUTLINE;
+	ctx.lineWidth = 2;
+	ctx.strokeRect(px + 3, py + 3, TILE_PX - 6, TILE_PX - 6);
+	if (comingSoon) {
+		ctx.fillStyle = '#6e6a86';
+		ctx.fillRect(px + 14, py + 14, 8, 8);
+	} else {
+		ctx.fillStyle = DOOR_OUTLINE;
+		ctx.fillRect(px + 16, py + 8, 4, 4);
+	}
+}
+
+function drawCharacter(
+	ctx: CanvasRenderingContext2D,
+	x: number,
+	y: number,
+	emoji: string,
+	ringColor: string,
+	facing?: Facing
+) {
+	const cx = x * TILE_PX + TILE_PX / 2;
+	const cy = y * TILE_PX + TILE_PX / 2;
+	ctx.fillStyle = 'rgba(0,0,0,0.25)';
+	ctx.beginPath();
+	ctx.ellipse(cx, cy + TILE_PX / 2 - 4, TILE_PX / 3, 3, 0, 0, Math.PI * 2);
+	ctx.fill();
+
+	ctx.strokeStyle = ringColor;
+	ctx.lineWidth = 2;
+	ctx.beginPath();
+	ctx.arc(cx, cy, TILE_PX / 2 - 4, 0, Math.PI * 2);
+	ctx.stroke();
+
+	ctx.font = `${Math.floor(TILE_PX * 0.7)}px sans-serif`;
+	ctx.textAlign = 'center';
+	ctx.textBaseline = 'middle';
+	ctx.fillText(emoji, cx, cy + 1);
+
+	if (facing) {
+		ctx.fillStyle = ringColor;
+		const fx = facing === 'left' ? -1 : facing === 'right' ? 1 : 0;
+		const fy = facing === 'up' ? -1 : facing === 'down' ? 1 : 0;
+		const tx = cx + fx * (TILE_PX / 2 - 2);
+		const ty = cy + fy * (TILE_PX / 2 - 2);
+		ctx.fillRect(tx - 2, ty - 2, 4, 4);
+	}
+}

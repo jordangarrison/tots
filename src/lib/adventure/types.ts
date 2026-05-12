@@ -1,22 +1,6 @@
-export type CharacterId = 'jane' | 'isla' | 'ollie';
+import type { Character, CharacterId } from '$lib/characters/types';
 
-export interface Pronouns {
-	they: string;
-	them: string;
-	their: string;
-	theirs: string;
-	themselves: string;
-}
-
-export interface Character {
-	id: CharacterId;
-	name: string;
-	title: string;
-	emoji: string;
-	pronouns: Pronouns;
-	accent: string;
-	description?: string;
-}
+export type { Character, CharacterId, Pronouns } from '$lib/characters/types';
 
 export interface Choice {
 	label: string;
