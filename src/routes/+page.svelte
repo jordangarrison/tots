@@ -72,6 +72,15 @@
 			href: '/games/kingdom',
 			accent: 'var(--rp-foam)',
 			category: 'games'
+		},
+		{
+			id: 'typing',
+			title: 'TYPING',
+			description: 'Tap a key. Hear the letter. Friendly fingers.',
+			emoji: '⌨️',
+			href: '/learning/typing',
+			accent: 'var(--rp-foam)',
+			category: 'learning'
 		}
 	];
 
