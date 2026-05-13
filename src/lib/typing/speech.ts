@@ -19,6 +19,15 @@ function isSupported(): boolean {
 if (isSupported()) {
 	try {
 		window.speechSynthesis.getVoices();
+		// Re-run the voice list reporter when voices arrive late. Many engines
+		// (Linux speech-dispatcher, Android system TTS) populate voices well
+		// after the first getVoices() call.
+		window.speechSynthesis.addEventListener('voiceschanged', () => {
+			loggedVoices = false;
+			warnedNoVoices = false;
+			const count = window.speechSynthesis.getVoices().length;
+			console.info(`[tots typing] voiceschanged: ${count} voices now available`);
+		});
 	} catch {
 		// noop
 	}
