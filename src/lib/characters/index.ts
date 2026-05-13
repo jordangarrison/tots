@@ -46,7 +46,7 @@ export const characters: Record<CharacterId, Character> = {
 	},
 	mommy: {
 		id: 'mommy',
-		name: 'Queen Mommy',
+		name: 'Mommy',
 		title: 'Queen',
 		emoji: '👸🏻',
 		pronouns: {
@@ -61,7 +61,7 @@ export const characters: Record<CharacterId, Character> = {
 	},
 	daddy: {
 		id: 'daddy',
-		name: 'King Daddy',
+		name: 'Daddy',
 		title: 'King',
 		emoji: '🤴🏻',
 		pronouns: {
