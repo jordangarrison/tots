@@ -22,7 +22,7 @@
 	<svg
 		class="hand"
 		viewBox="0 0 220 240"
-		preserveAspectRatio="xMidYEnd meet"
+		preserveAspectRatio="xMidYMax meet"
 		role="img"
 		aria-label="Left hand"
 	>
@@ -92,7 +92,7 @@
 	<svg
 		class="hand"
 		viewBox="0 0 220 240"
-		preserveAspectRatio="xMidYEnd meet"
+		preserveAspectRatio="xMidYMax meet"
 		role="img"
 		aria-label="Right hand"
 	>

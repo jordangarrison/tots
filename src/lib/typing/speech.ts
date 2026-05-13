@@ -13,6 +13,9 @@ function isSupported(): boolean {
 	return typeof window !== 'undefined' && 'speechSynthesis' in window;
 }
 
+let warnedSupport = false;
+let warnedDisabled = false;
+
 export function audioEnabled(): boolean {
 	if (typeof window === 'undefined') return true;
 	try {
@@ -69,7 +72,23 @@ interface SpeakOptions {
 
 /** Speak text. MUST be called from a user-gesture handler the first time. */
 export function speak(text: string, opts: SpeakOptions = {}): void {
-	if (!isSupported() || !audioEnabled() || !text) return;
+	if (!isSupported()) {
+		if (!warnedSupport) {
+			warnedSupport = true;
+			console.warn('[tots typing] speechSynthesis not available in this browser');
+		}
+		return;
+	}
+	if (!audioEnabled()) {
+		if (!warnedDisabled) {
+			warnedDisabled = true;
+			console.warn(
+				'[tots typing] audio disabled in localStorage. Clear `tots.typing.audio.v1` or click the SAY button to re-enable.'
+			);
+		}
+		return;
+	}
+	if (!text) return;
 	try {
 		const synth = window.speechSynthesis;
 		// Chrome occasionally pauses the queue (esp. after long idle); resume is harmless.
@@ -81,9 +100,10 @@ export function speak(text: string, opts: SpeakOptions = {}): void {
 		u.volume = 1;
 		const voice = pickVoice();
 		if (voice) u.voice = voice;
+		u.onerror = (ev) => console.warn('[tots typing] speech error', ev);
 		synth.speak(u);
-	} catch {
-		// noop
+	} catch (e) {
+		console.error('[tots typing] speak() threw', e);
 	}
 }
 
