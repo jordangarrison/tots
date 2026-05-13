@@ -26,6 +26,8 @@ if (isSupported()) {
 
 let warnedSupport = false;
 let warnedDisabled = false;
+let warnedNoVoices = false;
+let loggedVoices = false;
 
 export function audioEnabled(): boolean {
 	if (typeof window === 'undefined') return true;
@@ -58,27 +60,45 @@ function pickVoice(): SpeechSynthesisVoice | null {
 	if (!isSupported()) return null;
 	const voices = window.speechSynthesis.getVoices();
 	if (!voices.length) return null;
-	// Prefer LOCAL (offline) English voices. Chrome's network-backed voices
-	// like "Google US English" frequently throw `synthesis-failed`, especially
-	// for single-character utterances. Local OS voices are reliable.
-	const localEnglish = voices.filter((v) => v.localService && v.lang.startsWith('en'));
+
+	if (!loggedVoices) {
+		loggedVoices = true;
+		console.info(
+			`[tots typing] ${voices.length} voices available; en:`,
+			voices
+				.filter((v) => v.lang.startsWith('en'))
+				.map((v) => `${v.name} (${v.lang}, local=${v.localService})`)
+		);
+	}
+
+	const english = voices.filter((v) => v.lang.startsWith('en'));
+	const usEnglish = english.filter((v) => v.lang === 'en-US' || v.lang === 'en_US');
 	const friendlyNames = [
-		/karen/i,
 		/samantha/i,
+		/karen/i,
 		/victoria/i,
 		/allison/i,
 		/zira/i,
 		/aria/i,
 		/jenny/i
 	];
-	for (const re of friendlyNames) {
-		const m = localEnglish.find((v) => re.test(v.name));
-		if (m) return m;
+
+	// Prefer LOCAL en-US > local en-* > any en-US > any en-* — friendlier names first.
+	const tiers = [
+		usEnglish.filter((v) => v.localService),
+		english.filter((v) => v.localService),
+		usEnglish,
+		english
+	];
+	for (const tier of tiers) {
+		if (!tier.length) continue;
+		for (const re of friendlyNames) {
+			const m = tier.find((v) => re.test(v.name));
+			if (m) return m;
+		}
+		return tier[0];
 	}
-	if (localEnglish.length) return localEnglish[0];
-	// No local English voice — let the browser default kick in. Returning null
-	// is fine; we just don't set u.voice and the OS picks.
-	return null;
+	return voices[0] ?? null;
 }
 
 interface SpeakOptions {
@@ -112,29 +132,43 @@ export function speak(text: string, opts: SpeakOptions = {}): void {
 		// Chrome occasionally pauses the queue (esp. after long idle); resume is harmless.
 		synth.resume();
 		if (opts.interrupt) synth.cancel();
+
+		const voices = synth.getVoices();
+		if (!voices.length && !warnedNoVoices) {
+			warnedNoVoices = true;
+			console.warn(
+				'[tots typing] no synthesis voices available yet — speech may be silent until the OS finishes loading them.'
+			);
+		}
+
 		const u = new SpeechSynthesisUtterance(text);
+		// Default to US English so engines without an active voice still know
+		// what language to look up.
+		u.lang = 'en-US';
 		u.rate = opts.rate ?? 0.95;
 		u.pitch = opts.pitch ?? 1.15;
 		u.volume = 1;
 		const voice = pickVoice();
 		if (voice) u.voice = voice;
 		u.onerror = (ev: SpeechSynthesisErrorEvent) => {
-			// synthesis-failed is a Chrome quirk. Retry once without setting a
-			// voice — the OS default is usually reliable when a specific voice
-			// errors out.
+			// synthesis-failed is a Chrome quirk. Retry once without the picked
+			// voice — the OS default sometimes succeeds when a specific voice
+			// can't synthesize.
 			if (ev.error === 'synthesis-failed' && voice) {
 				const retry = new SpeechSynthesisUtterance(text);
+				retry.lang = 'en-US';
 				retry.rate = opts.rate ?? 0.95;
 				retry.pitch = opts.pitch ?? 1.15;
 				retry.volume = 1;
-				retry.onerror = (e) => console.warn('[tots typing] speech retry error', e);
+				retry.onerror = (e: SpeechSynthesisErrorEvent) =>
+					console.warn('[tots typing] retry also failed', e.error);
 				try {
 					synth.speak(retry);
 				} catch {
 					// noop
 				}
 			} else {
-				console.warn('[tots typing] speech error', ev);
+				console.warn('[tots typing] speech error', ev.error, ev);
 			}
 		};
 		synth.speak(u);
