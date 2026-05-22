@@ -31,6 +31,9 @@ export interface Enemy {
 	fireFromCellX: number;
 	fireFromCellY: number;
 	fireFacing: Facing;
+	// Enemy can't enter ghost mode again until this timestamp. Set on level
+	// start and after each rematerialization so ghosting stays rare.
+	noGhostUntil: number;
 	// Score points awarded when popped (depth-based).
 	points: number;
 }

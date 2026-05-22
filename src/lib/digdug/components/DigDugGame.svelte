@@ -22,7 +22,14 @@
 	const FYGAR_FIRE_COOLDOWN_MS = 4500;
 	const FYGAR_FIRE_DURATION_MS = 900;
 	const FYGAR_FIRE_RANGE = 2;
-	const GHOST_STUCK_MS = 1800;
+	// How long an enemy must be wedged with zero open neighbors before it
+	// flips into ghost mode. Long, so ghosting feels like a rare last resort.
+	const GHOST_STUCK_MS = 6000;
+	// After rematerializing, the enemy must roam for this long before it's
+	// allowed to ghost again. Prevents an endless ghost loop along edges.
+	const GHOST_COOLDOWN_MS = 8000;
+	// Roll for a wandering move instead of beelining toward the player.
+	const RANDOM_TURN_CHANCE = 0.35;
 
 	let canvasEl: HTMLCanvasElement;
 	let ctx: CanvasRenderingContext2D | null = null;
@@ -56,6 +63,19 @@
 		d: 'right',
 		D: 'right'
 	};
+
+	function oppositeDir(d: Facing): Facing {
+		switch (d) {
+			case 'up':
+				return 'down';
+			case 'down':
+				return 'up';
+			case 'left':
+				return 'right';
+			case 'right':
+				return 'left';
+		}
+	}
 
 	function dirDelta(d: Facing): { dx: number; dy: number } {
 		switch (d) {
@@ -286,6 +306,7 @@
 					// If we step onto a tunnel/sky cell, materialize back to roaming.
 					if (isOpen(tileAt(state.grid, tx, ty)) && !rockAtCell(tx, ty)) {
 						e.state = 'roaming';
+						e.noGhostUntil = now + GHOST_COOLDOWN_MS;
 					}
 					moveEnemyTo(e, tx, ty, now);
 					enemyLastMoveAt[e.id] = now;
@@ -293,27 +314,29 @@
 				}
 			}
 
-			// Roaming: prefer direction toward player among open neighbors.
-			const ordered = preferredDirs(e);
-			for (const d of ordered) {
-				if (open.has(d)) {
-					nextDir = d;
-					break;
+			// Roaming: pick a direction. Bias toward the player but throw in
+			// some randomness so enemies wander instead of oscillating.
+			if (open.size > 0) {
+				const opp = oppositeDir(e.facing);
+				const forward = [...open].filter((d) => d !== opp);
+				if (Math.random() < RANDOM_TURN_CHANCE && forward.length > 0) {
+					nextDir = forward[Math.floor(Math.random() * forward.length)];
+				} else {
+					const ordered = preferredDirs(e).filter((d) => open.has(d));
+					// Drop the reverse direction unless it's our only choice.
+					const noReverse = ordered.filter((d) => d !== opp);
+					if (noReverse.length > 0) nextDir = noReverse[0];
+					else nextDir = ordered[0] ?? null;
 				}
 			}
-			// If totally stuck, pick any open. If still none, consider going ghost.
+			// No open neighbor at all → consider going ghost (after cooldown).
 			if (!nextDir) {
-				const any = [...open][0];
-				if (any) {
-					nextDir = any;
-				} else {
-					const stuckSince = enemyLastMoveAt[e.id] ?? e.moveStartedAt;
-					if (now - stuckSince > GHOST_STUCK_MS) {
-						e.state = 'ghost';
-						e.moveStartedAt = now;
-					}
-					continue;
+				const stuckSince = enemyLastMoveAt[e.id] ?? e.moveStartedAt;
+				if (now - stuckSince > GHOST_STUCK_MS && now >= e.noGhostUntil) {
+					e.state = 'ghost';
+					e.moveStartedAt = now;
 				}
+				continue;
 			}
 
 			const { dx, dy } = dirDelta(nextDir);
