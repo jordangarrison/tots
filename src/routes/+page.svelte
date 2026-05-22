@@ -74,6 +74,15 @@
 			category: 'games'
 		},
 		{
+			id: 'digdug',
+			title: 'DIG DUG',
+			description: 'Tunnel underground. Pump up pookas. Drop rocks on dragons.',
+			emoji: '⛏️',
+			href: '/games/digdug',
+			accent: 'var(--rp-gold)',
+			category: 'games'
+		},
+		{
 			id: 'typing',
 			title: 'TYPING',
 			description: 'Tap a key. Hear the letter. Friendly fingers.',
