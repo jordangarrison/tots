@@ -90,6 +90,15 @@
 			href: '/learning/typing',
 			accent: 'var(--rp-foam)',
 			category: 'learning'
+		},
+		{
+			id: 'molecules',
+			title: 'MOLECULES',
+			description: 'Drag atoms together. See what they build. Earn quests.',
+			emoji: '🧪',
+			href: '/learning/molecules',
+			accent: 'var(--rp-iris)',
+			category: 'learning'
 		}
 	];
 
