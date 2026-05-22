@@ -9,6 +9,7 @@ export const ELEMENTS: Element[] = [
 	{ symbol: 'F', name: 'Fluorine', atomicNumber: 9, fill: '#c5e478', text: '#1b2a08' },
 	{ symbol: 'Na', name: 'Sodium', atomicNumber: 11, fill: '#c4a7e7', text: '#1f0f33' },
 	{ symbol: 'Mg', name: 'Magnesium', atomicNumber: 12, fill: '#9ccfd8', text: '#0a2429' },
+	{ symbol: 'S', name: 'Sulfur', atomicNumber: 16, fill: '#f1d96b', text: '#332a05' },
 	{ symbol: 'Cl', name: 'Chlorine', atomicNumber: 17, fill: '#7ad58c', text: '#0d2918' },
 	{ symbol: 'Ca', name: 'Calcium', atomicNumber: 20, fill: '#f6c177', text: '#332006' },
 	{ symbol: 'Fe', name: 'Iron', atomicNumber: 26, fill: '#e88c4a', text: '#2a1305' }

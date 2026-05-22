@@ -168,10 +168,78 @@
 		if (drag && drag.pointerId === ev.pointerId) drag = null;
 	}
 
+	// Pick a scatter point in the workbench that isn't sitting on top of another atom.
+	function scatter(): { x: number; y: number } | null {
+		if (!workbenchEl) return null;
+		const r = workbenchEl.getBoundingClientRect();
+		const pad = 36;
+		const minDist = 52;
+		const usableW = Math.max(60, r.width - pad * 2);
+		const usableH = Math.max(60, r.height - pad * 2);
+		for (let i = 0; i < 30; i++) {
+			const x = pad + Math.random() * usableW;
+			const y = pad + Math.random() * usableH;
+			const conflict = placed.some((p) => Math.hypot(p.x - x, p.y - y) < minDist);
+			if (!conflict) return { x, y };
+		}
+		return {
+			x: pad + Math.random() * usableW,
+			y: pad + Math.random() * usableH
+		};
+	}
+
+	function addOne(symbol: string) {
+		const pos = scatter();
+		if (!pos) return;
+		placed = [...placed, { id: nextId++, el: symbol, x: pos.x, y: pos.y }];
+		scheduleReact();
+	}
+
+	function removeOne(symbol: string) {
+		for (let i = placed.length - 1; i >= 0; i--) {
+			if (placed[i].el === symbol) {
+				placed = [...placed.slice(0, i), ...placed.slice(i + 1)];
+				scheduleReact();
+				return;
+			}
+		}
+	}
+
+	// Long-press repeating handlers. Tap once for a single add; hold to keep adding.
+	let pressHoldTimer: ReturnType<typeof setTimeout> | null = null;
+	let pressRepeatTimer: ReturnType<typeof setInterval> | null = null;
+
+	function startPress(action: () => void, ev: PointerEvent) {
+		ev.stopPropagation();
+		ev.preventDefault();
+		(ev.currentTarget as HTMLElement).setPointerCapture(ev.pointerId);
+		action();
+		pressHoldTimer = setTimeout(() => {
+			pressRepeatTimer = setInterval(action, 110);
+		}, 380);
+	}
+
+	function endPress() {
+		if (pressHoldTimer) {
+			clearTimeout(pressHoldTimer);
+			pressHoldTimer = null;
+		}
+		if (pressRepeatTimer) {
+			clearInterval(pressRepeatTimer);
+			pressRepeatTimer = null;
+		}
+	}
+
 	$: counts = (() => {
 		const c = new Map<string, number>();
 		for (const p of placed) c.set(p.el, (c.get(p.el) ?? 0) + 1);
 		return [...c.entries()].sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0));
+	})();
+
+	$: countsBySymbol = (() => {
+		const c: Record<string, number> = {};
+		for (const p of placed) c[p.el] = (c[p.el] ?? 0) + 1;
+		return c;
 	})();
 
 	$: matched = result.status === 'matched' ? result.molecule : null;
@@ -291,16 +359,44 @@
 		<ul class="tray" aria-label="Element tray">
 			{#each ELEMENTS as el (el.symbol)}
 				<li>
-					<button
-						type="button"
-						class="tile"
-						style="--fill: {el.fill}; --text: {el.text}"
-						on:pointerdown={(ev) => onTrayPointerDown(ev, el.symbol)}
-						aria-label="Drag a {el.name} atom"
-					>
-						<span class="tile-symbol">{el.symbol}</span>
-						<span class="tile-name">{el.name}</span>
-					</button>
+					<div class="tile" style="--fill: {el.fill}; --text: {el.text}">
+						<div
+							class="tile-body"
+							on:pointerdown={(ev) => onTrayPointerDown(ev, el.symbol)}
+							role="button"
+							tabindex="0"
+							aria-label="Drag a {el.name} atom"
+						>
+							<span class="tile-symbol">{el.symbol}</span>
+							<span class="tile-name">{el.name}</span>
+						</div>
+						<div class="tile-counter" aria-label="{el.name} count">
+							<button
+								type="button"
+								class="tile-step"
+								on:pointerdown={(ev) => startPress(() => removeOne(el.symbol), ev)}
+								on:pointerup={endPress}
+								on:pointerleave={endPress}
+								on:pointercancel={endPress}
+								disabled={(countsBySymbol[el.symbol] ?? 0) === 0}
+								aria-label="Remove one {el.name}"
+							>
+								−
+							</button>
+							<span class="tile-count">{countsBySymbol[el.symbol] ?? 0}</span>
+							<button
+								type="button"
+								class="tile-step"
+								on:pointerdown={(ev) => startPress(() => addOne(el.symbol), ev)}
+								on:pointerup={endPress}
+								on:pointerleave={endPress}
+								on:pointercancel={endPress}
+								aria-label="Add one {el.name}"
+							>
+								+
+							</button>
+						</div>
+					</div>
 				</li>
 			{/each}
 		</ul>
@@ -698,26 +794,33 @@
 	}
 	.tile {
 		flex: 0 0 auto;
-		min-width: 64px;
-		min-height: 72px;
+		min-width: 78px;
 		background: var(--fill);
 		color: var(--text);
 		border: 3px solid var(--rp-base);
 		border-radius: 6px;
-		padding: 0.35rem 0.5rem 0.4rem;
+		display: flex;
+		flex-direction: column;
+		align-items: stretch;
+		gap: 0;
+		box-shadow: 0 0 10px var(--fill);
+		scroll-snap-align: start;
+		overflow: hidden;
+	}
+
+	.tile-body {
 		display: flex;
 		flex-direction: column;
 		align-items: center;
-		gap: 0.2rem;
+		gap: 0.15rem;
+		padding: 0.4rem 0.5rem 0.35rem;
 		cursor: grab;
 		touch-action: none;
-		box-shadow: 0 0 10px var(--fill);
-		scroll-snap-align: start;
 	}
-	.tile:active {
+	.tile-body:active {
 		cursor: grabbing;
-		transform: scale(0.95);
 	}
+
 	.tile-symbol {
 		font-family: 'Press Start 2P', cursive;
 		font-size: 1rem;
@@ -727,6 +830,42 @@
 		font-family: 'VT323', monospace;
 		font-size: 0.85rem;
 		opacity: 0.85;
+	}
+
+	.tile-counter {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		background: rgba(0, 0, 0, 0.18);
+		padding: 0 0.1rem;
+		border-top: 1px solid rgba(0, 0, 0, 0.25);
+	}
+	.tile-step {
+		background: transparent;
+		border: none;
+		color: var(--text);
+		font-family: 'Press Start 2P', cursive;
+		font-size: 0.9rem;
+		padding: 0.35rem 0.6rem;
+		cursor: pointer;
+		touch-action: manipulation;
+		min-width: 28px;
+		min-height: 32px;
+		line-height: 1;
+	}
+	.tile-step:disabled {
+		opacity: 0.3;
+		cursor: not-allowed;
+	}
+	.tile-step:active:not(:disabled) {
+		transform: scale(0.9);
+	}
+	.tile-count {
+		font-family: 'Press Start 2P', cursive;
+		font-size: 0.7rem;
+		min-width: 18px;
+		text-align: center;
+		color: var(--text);
 	}
 
 	.ghost {
