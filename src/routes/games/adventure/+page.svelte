@@ -6,8 +6,12 @@
 	import StoryPicker from '$lib/adventure/components/StoryPicker.svelte';
 	import CharacterPicker from '$lib/characters/CharacterPicker.svelte';
 	import StoryPlayer from '$lib/adventure/components/StoryPlayer.svelte';
+	import { onMount } from 'svelte';
+	import { recordPlay } from '$lib/arcade/scores';
 
 	export const prerender = true;
+
+	onMount(() => recordPlay('adventure'));
 
 	let storyId: string | null = null;
 	let characterId: CharacterId | null = null;

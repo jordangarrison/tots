@@ -1,10 +1,14 @@
 <script lang="ts">
+	import { onMount } from 'svelte';
 	import CreativeCanvas from '$lib/canvas/CreativeCanvas.svelte';
 	import { templates, type ColoringTemplate } from '$lib/coloring/templates';
 	import { printCanvas } from '$lib/print';
 	import { saveImage } from '$lib/save';
+	import { recordPlay } from '$lib/arcade/scores';
 
 	export const prerender = true;
+
+	onMount(() => recordPlay('coloring'));
 
 	const CANVAS_W = 1024;
 	const CANVAS_H = 768;

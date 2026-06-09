@@ -4,7 +4,14 @@
 	import HandsDisplay from './HandsDisplay.svelte';
 	import { keyFor } from './fingerMap';
 	import { assocFor } from './letterAssoc';
-	import { audioEnabled, setAudioEnabled, speak, speakChar, unlockSpeech } from './speech';
+	import {
+		audioEnabled,
+		cancelSpeech,
+		setAudioEnabled,
+		speak,
+		speakChar,
+		unlockSpeech
+	} from './speech';
 	import type { Finger } from './types';
 
 	const dispatch = createEventDispatcher<{ exit: void }>();
@@ -14,6 +21,7 @@
 	let lastPressed: { char: string; correct: boolean; nonce: number } | null = null;
 	let audioOn = true;
 	let bigKeyNonce = 0;
+	let wordTimer: number | null = null;
 
 	$: assoc = currentChar ? assocFor(currentChar) : undefined;
 
@@ -53,7 +61,8 @@
 		speakChar(pressed);
 		const a = assocFor(pressed);
 		if (a) {
-			window.setTimeout(() => speak(a.word, { rate: 0.9, pitch: 1.15 }), 350);
+			if (wordTimer) clearTimeout(wordTimer);
+			wordTimer = window.setTimeout(() => speak(a.word, { rate: 0.9, pitch: 1.15 }), 350);
 		}
 	}
 
@@ -62,6 +71,8 @@
 		window.addEventListener('keydown', handleKey);
 	});
 	onDestroy(() => {
+		if (wordTimer) clearTimeout(wordTimer);
+		cancelSpeech();
 		if (typeof window !== 'undefined') window.removeEventListener('keydown', handleKey);
 	});
 </script>

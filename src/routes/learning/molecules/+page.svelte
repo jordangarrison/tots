@@ -1,18 +1,15 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
+	import { onDestroy, onMount } from 'svelte';
 	import { cubicOut } from 'svelte/easing';
 	import { ELEMENTS, ELEMENT_BY_SYMBOL } from '$lib/molecules/elements';
 	import { MOLECULES } from '$lib/molecules/molecules';
 	import { QUESTS } from '$lib/molecules/quests';
 	import { combine, type ReactionResult } from '$lib/molecules/engine';
-	import {
-		loadProgress,
-		recordDiscovery,
-		recordQuest
-	} from '$lib/molecules/save';
+	import { loadProgress, recordDiscovery, recordQuest } from '$lib/molecules/save';
 	import type { MoleculesSave } from '$lib/molecules/types';
 	import { parseFormula } from '$lib/molecules/types';
 	import MoleculeView from '$lib/molecules/MoleculeView.svelte';
+	import { recordPlay } from '$lib/arcade/scores';
 
 	export const prerender = true;
 
@@ -52,6 +49,13 @@
 
 	onMount(() => {
 		save = loadProgress();
+		recordPlay('molecules');
+	});
+
+	onDestroy(() => {
+		if (reactTimer) clearTimeout(reactTimer);
+		if (toastTimer) clearTimeout(toastTimer);
+		endPress();
 	});
 
 	function scheduleReact() {
@@ -287,12 +291,7 @@
 	</header>
 
 	<div class="stage" class:overlayed={panel !== 'workbench'}>
-		<div
-			class="workbench"
-			class:matched
-			bind:this={workbenchEl}
-			aria-label="Mixing area"
-		>
+		<div class="workbench" class:matched bind:this={workbenchEl} aria-label="Mixing area">
 			{#if placed.length === 0 && !matched}
 				<div class="placeholder">
 					<div class="placeholder-emoji">🧪</div>
@@ -307,7 +306,9 @@
 				<div class="match-card">
 					<div class="match-name">{matched.name}</div>
 					<div class="match-formula">
-						{#each parseFormula(matched.formula) as part (part.el + (part.n ?? ''))}<span class="el-letters">{part.el}</span>{#if part.n}<sub>{part.n}</sub>{/if}{/each}
+						{#each parseFormula(matched.formula) as part (part.el + (part.n ?? ''))}<span
+								class="el-letters">{part.el}</span
+							>{#if part.n}<sub>{part.n}</sub>{/if}{/each}
 					</div>
 					<div class="match-fact">{matched.fact}</div>
 				</div>
@@ -348,10 +349,20 @@
 		</aside>
 
 		<div class="controls">
-			<button type="button" class="ctrl-btn react" on:click={manualReact} disabled={placed.length === 0}>
+			<button
+				type="button"
+				class="ctrl-btn react"
+				on:click={manualReact}
+				disabled={placed.length === 0}
+			>
 				⚡ REACT!
 			</button>
-			<button type="button" class="ctrl-btn clear" on:click={clearWorkbench} disabled={placed.length === 0}>
+			<button
+				type="button"
+				class="ctrl-btn clear"
+				on:click={clearWorkbench}
+				disabled={placed.length === 0}
+			>
 				✕ CLEAR
 			</button>
 		</div>
@@ -417,7 +428,9 @@
 								<div class="journal-thumb"><MoleculeView molecule={m} animate={false} /></div>
 								<div class="journal-name">{m.name}</div>
 								<div class="journal-formula">
-									{#each parseFormula(m.formula) as part (part.el + (part.n ?? ''))}<span>{part.el}</span>{#if part.n}<sub>{part.n}</sub>{/if}{/each}
+									{#each parseFormula(m.formula) as part (part.el + (part.n ?? ''))}<span
+											>{part.el}</span
+										>{#if part.n}<sub>{part.n}</sub>{/if}{/each}
 								</div>
 								<div class="journal-fact">{m.fact}</div>
 							{:else}
@@ -508,9 +521,7 @@
 		font-family: 'Press Start 2P', cursive;
 		font-size: 1rem;
 		color: var(--rp-text);
-		text-shadow:
-			0 0 10px var(--rp-iris),
-			0 0 20px rgba(196, 167, 231, 0.6);
+		text-shadow: 0 0 10px var(--rp-iris), 0 0 20px rgba(196, 167, 231, 0.6);
 		margin: 0;
 		display: flex;
 		align-items: center;
@@ -580,11 +591,7 @@
 		position: relative;
 		flex: 1;
 		min-height: 0;
-		background: radial-gradient(
-				circle at 50% 50%,
-				rgba(196, 167, 231, 0.12),
-				transparent 65%
-			),
+		background: radial-gradient(circle at 50% 50%, rgba(196, 167, 231, 0.12), transparent 65%),
 			var(--rp-surface);
 		border: 3px dashed var(--rp-iris);
 		border-radius: 8px;
