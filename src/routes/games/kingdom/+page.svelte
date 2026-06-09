@@ -6,8 +6,11 @@
 	import KingdomGame from '$lib/kingdom/components/KingdomGame.svelte';
 	import { loadSave, newSave } from '$lib/kingdom/save';
 	import type { SaveState } from '$lib/kingdom/types';
+	import { recordPlay } from '$lib/arcade/scores';
 
 	export const prerender = true;
+
+	onMount(() => recordPlay('kingdom'));
 
 	let state: SaveState | null = null;
 	let booted = false;

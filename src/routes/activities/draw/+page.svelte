@@ -1,10 +1,14 @@
 <script lang="ts">
+	import { onMount } from 'svelte';
 	import P5 from 'p5-svelte';
 	import type { Sketch } from 'p5-svelte';
 	import { printCanvas } from '$lib/print';
 	import { saveImage } from '$lib/save';
+	import { recordPlay } from '$lib/arcade/scores';
 
 	export const prerender = true;
+
+	onMount(() => recordPlay('draw'));
 
 	// Canvas container reference
 	let canvasContainer: HTMLElement;
@@ -17,9 +21,9 @@
 		[235, 111, 146], // Love
 		[246, 193, 119], // Gold
 		[235, 188, 186], // Rose
-		[49, 116, 143],  // Pine
+		[49, 116, 143], // Pine
 		[156, 207, 216], // Foam
-		[196, 167, 231], // Iris
+		[196, 167, 231] // Iris
 	];
 
 	// Rose Pine surface (dark) and Rose Pine dawn base (light) for the canvas.
@@ -135,8 +139,11 @@
 			p5.beginShape();
 			for (let a = 0; a < p5.TWO_PI; a += 0.1) {
 				const r = size / 3;
-				const heartX = x + r * 16 * Math.pow(Math.sin(a), 3) / 16;
-				const heartY = y - r * (13 * Math.cos(a) - 5 * Math.cos(2 * a) - 2 * Math.cos(3 * a) - Math.cos(4 * a)) / 16;
+				const heartX = x + (r * 16 * Math.pow(Math.sin(a), 3)) / 16;
+				const heartY =
+					y -
+					(r * (13 * Math.cos(a) - 5 * Math.cos(2 * a) - 2 * Math.cos(3 * a) - Math.cos(4 * a))) /
+						16;
 				p5.vertex(heartX, heartY);
 			}
 			p5.endShape(p5.CLOSE);
@@ -155,11 +162,7 @@
 					drawHeart(x, y, size);
 					break;
 				case 'triangle':
-					p5.triangle(
-						x, y - size / 2,
-						x - size / 2, y + size / 2,
-						x + size / 2, y + size / 2
-					);
+					p5.triangle(x, y - size / 2, x - size / 2, y + size / 2, x + size / 2, y + size / 2);
 					break;
 				case 'square':
 					p5.rectMode(p5.CENTER);
@@ -211,7 +214,9 @@
 				return false;
 			} else if (p5.keyCode === p5.LEFT_ARROW || p5.keyCode === p5.RIGHT_ARROW) {
 				// Change color palette direction
-				colorIndex = (colorIndex + (p5.keyCode === p5.RIGHT_ARROW ? 1 : -1) + rainbowColors.length) % rainbowColors.length;
+				colorIndex =
+					(colorIndex + (p5.keyCode === p5.RIGHT_ARROW ? 1 : -1) + rainbowColors.length) %
+					rainbowColors.length;
 				return false;
 			}
 
@@ -226,7 +231,7 @@
 			// Escape or backspace clears with a fun effect
 			if (p5.keyCode === p5.ESCAPE || p5.keyCode === p5.BACKSPACE) {
 				// Create confetti for each shape before clearing
-				shapes.forEach(s => createConfetti(s.x, s.y, 10));
+				shapes.forEach((s) => createConfetti(s.x, s.y, 10));
 				shapes = [];
 				const bg = currentBg();
 				p5.background(bg[0], bg[1], bg[2]);
@@ -272,7 +277,12 @@
 
 				// Inner highlight
 				p5.fill(255, 255, 255, 100);
-				drawShapeByType(shapeType, x - newShape.size * 0.1, y - newShape.size * 0.1, newShape.size * 0.3);
+				drawShapeByType(
+					shapeType,
+					x - newShape.size * 0.1,
+					y - newShape.size * 0.1,
+					newShape.size * 0.3
+				);
 
 				// Celebration confetti!
 				createConfetti(x, y, 15);
@@ -307,7 +317,12 @@
 				p5.fill(color[0], color[1], color[2]);
 				drawShapeByType(shapeType, p5.mouseX, p5.mouseY, newShape.size);
 				p5.fill(255, 255, 255, 100);
-				drawShapeByType(shapeType, p5.mouseX - newShape.size * 0.1, p5.mouseY - newShape.size * 0.1, newShape.size * 0.3);
+				drawShapeByType(
+					shapeType,
+					p5.mouseX - newShape.size * 0.1,
+					p5.mouseY - newShape.size * 0.1,
+					newShape.size * 0.3
+				);
 
 				createConfetti(p5.mouseX, p5.mouseY, 20);
 			}
@@ -326,7 +341,7 @@
 			}
 
 			// Draw and update rainbow trail
-			trail = trail.filter(point => {
+			trail = trail.filter((point) => {
 				point.age++;
 				if (point.age > 30) return false;
 
@@ -341,7 +356,7 @@
 			});
 
 			// Update and draw particles
-			particles = particles.filter(particle => {
+			particles = particles.filter((particle) => {
 				particle.x += particle.vx;
 				particle.y += particle.vy;
 				particle.vy += 0.2; // gravity
@@ -374,7 +389,7 @@
 			});
 
 			// Animate shapes on hover with wobble
-			shapes.forEach(shape => {
+			shapes.forEach((shape) => {
 				if (
 					p5.mouseX > shape.x - shape.size / 2 &&
 					p5.mouseX < shape.x + shape.size / 2 &&
@@ -456,7 +471,12 @@
 		<button type="button" class="print-btn" on:click={printDrawing} title="Print this drawing">
 			🖨 PRINT
 		</button>
-		<button type="button" class="save-btn" on:click={saveDrawing} title="Save this drawing as a PNG">
+		<button
+			type="button"
+			class="save-btn"
+			on:click={saveDrawing}
+			title="Save this drawing as a PNG"
+		>
 			💾 SAVE
 		</button>
 	</div>
@@ -495,9 +515,7 @@
 		border-radius: 4px;
 		margin: 0 auto 0.35rem;
 		max-width: fit-content;
-		box-shadow:
-			0 0 0 2px var(--rp-base),
-			0 0 12px var(--rp-iris);
+		box-shadow: 0 0 0 2px var(--rp-base), 0 0 12px var(--rp-iris);
 		font-family: 'Press Start 2P', cursive;
 		font-size: 0.55rem;
 		letter-spacing: 0.15em;
@@ -612,9 +630,7 @@
 	:global(canvas) {
 		border: 3px solid var(--rp-pine);
 		border-radius: 4px;
-		box-shadow:
-			0 0 0 2px var(--rp-base),
-			0 0 18px var(--rp-pine);
+		box-shadow: 0 0 0 2px var(--rp-base), 0 0 18px var(--rp-pine);
 		display: block;
 		margin: 0 auto;
 	}

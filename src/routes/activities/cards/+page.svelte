@@ -1,8 +1,12 @@
 <script lang="ts">
+	import { onMount } from 'svelte';
 	import { cardTemplates } from '$lib/cards/templates';
 	import { occasionOrder, occasionLabels, type Occasion } from '$lib/cards/types';
+	import { recordPlay } from '$lib/arcade/scores';
 
 	export const prerender = true;
+
+	onMount(() => recordPlay('cards'));
 
 	const groups = occasionOrder
 		.map((occasion) => ({
@@ -31,15 +35,15 @@
 			PICK A CARD
 			<span class="prompt-cursor">_</span>
 		</h2>
-		<span class="spacer" aria-hidden="true"></span>
+		<span class="spacer" aria-hidden="true" />
 	</div>
 
 	{#each groups as group (group.occasion)}
 		<section class="category" style="--accent: {occasionAccents[group.occasion]};">
 			<h3 class="category-title">
-				<span class="rule"></span>
+				<span class="rule" />
 				<span class="label">{group.label}</span>
-				<span class="rule"></span>
+				<span class="rule" />
 			</h3>
 			<ul class="card-grid">
 				{#each group.items as t (t.id)}
@@ -106,9 +110,7 @@
 		font-family: 'Press Start 2P', cursive;
 		font-size: 1.2rem;
 		color: var(--rp-text);
-		text-shadow:
-			0 0 10px var(--rp-iris),
-			0 0 20px rgba(196, 167, 231, 0.6);
+		text-shadow: 0 0 10px var(--rp-iris), 0 0 20px rgba(196, 167, 231, 0.6);
 		margin: 0;
 		display: flex;
 		align-items: center;
@@ -127,7 +129,9 @@
 	}
 
 	@keyframes blink {
-		to { visibility: hidden; }
+		to {
+			visibility: hidden;
+		}
 	}
 
 	.category {
@@ -189,9 +193,7 @@
 		text-align: center;
 		text-decoration: none;
 		color: var(--rp-text);
-		box-shadow:
-			0 0 0 2px var(--rp-base),
-			0 0 12px var(--accent),
+		box-shadow: 0 0 0 2px var(--rp-base), 0 0 12px var(--accent),
 			inset 0 0 24px rgba(255, 255, 255, 0.03);
 		transition: transform 0.15s steps(3), box-shadow 0.15s ease;
 		min-height: 200px;
@@ -201,10 +203,7 @@
 	.card:hover,
 	.card:focus-visible {
 		transform: translate(-2px, -4px);
-		box-shadow:
-			0 0 0 2px var(--rp-base),
-			0 0 24px var(--accent),
-			0 0 48px var(--accent),
+		box-shadow: 0 0 0 2px var(--rp-base), 0 0 24px var(--accent), 0 0 48px var(--accent),
 			inset 0 0 24px rgba(255, 255, 255, 0.06);
 		outline: none;
 	}
@@ -213,9 +212,7 @@
 		font-size: 3.5rem;
 		line-height: 1;
 		color: var(--accent);
-		text-shadow:
-			0 0 12px var(--accent),
-			0 0 24px var(--accent);
+		text-shadow: 0 0 12px var(--accent), 0 0 24px var(--accent);
 	}
 
 	.title {

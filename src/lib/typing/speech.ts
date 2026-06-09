@@ -186,6 +186,16 @@ export function speak(text: string, opts: SpeakOptions = {}): void {
 	}
 }
 
+/** Stop any queued or in-flight speech (e.g. when leaving a lesson). */
+export function cancelSpeech(): void {
+	if (!isSupported()) return;
+	try {
+		window.speechSynthesis.cancel();
+	} catch {
+		// noop
+	}
+}
+
 /** No-op marker kept so callers don't break; speech unlocks itself via speak(). */
 export function unlockSpeech(): void {
 	if (!isSupported()) return;

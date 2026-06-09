@@ -4,7 +4,14 @@
 	import HandsDisplay from './HandsDisplay.svelte';
 	import { fingerFor, needsShift, shiftFingerFor } from './fingerMap';
 	import { recordResult } from './save';
-	import { speak, speakChar, audioEnabled, setAudioEnabled, unlockSpeech } from './speech';
+	import {
+		speak,
+		speakChar,
+		audioEnabled,
+		cancelSpeech,
+		setAudioEnabled,
+		unlockSpeech
+	} from './speech';
 	import { assocFor } from './letterAssoc';
 	import type { Lesson, LessonResult } from './types';
 
@@ -31,6 +38,7 @@
 	let cheer = '';
 	let targetNonce = 0;
 	let cursorEl: HTMLElement | null = null;
+	let introTimer: number | null = null;
 
 	$: currentChar = targets[cursor] ?? null;
 	$: currentFinger = currentChar ? fingerFor(currentChar) : undefined;
@@ -113,6 +121,7 @@
 	}
 
 	function restart() {
+		cancelSpeech();
 		cursor = 0;
 		mistakes = 0;
 		totalKeys = 0;
@@ -154,10 +163,12 @@
 		// card to get here, browsers still consider the page within a user
 		// gesture window for a few seconds, so this usually plays.
 		if (audioOn && currentChar) {
-			window.setTimeout(() => speakChar(currentChar as string), 250);
+			introTimer = window.setTimeout(() => speakChar(currentChar as string), 250);
 		}
 	});
 	onDestroy(() => {
+		if (introTimer) clearTimeout(introTimer);
+		cancelSpeech();
 		if (typeof window !== 'undefined') window.removeEventListener('keydown', handleKey);
 	});
 

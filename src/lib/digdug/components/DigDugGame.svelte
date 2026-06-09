@@ -6,6 +6,16 @@
 	import { GRID_H, GRID_W, isOpen, tileAt, tileIndex } from '../types';
 	import { makeLevel, rockSupportedAt } from '../level';
 	import { draw, gridPixelSize } from '../render';
+	import { reportScore } from '$lib/arcade/scores';
+	import {
+		sfxBlip,
+		sfxFanfare,
+		sfxGameOver,
+		sfxHighScore,
+		sfxHit,
+		sfxPop,
+		sfxThud
+	} from '$lib/arcade/sounds';
 
 	export let characterId: CharacterId;
 	export let onExit: () => void;
@@ -100,9 +110,7 @@
 
 	function enemyAtCell(x: number, y: number): Enemy | null {
 		return (
-			state.enemies.find(
-				(e) => e.state !== 'popping' && e.cellX === x && e.cellY === y
-			) ?? null
+			state.enemies.find((e) => e.state !== 'popping' && e.cellX === x && e.cellY === y) ?? null
 		);
 	}
 
@@ -250,10 +258,12 @@
 		e.inflateLevel = Math.min(POP_AT_LEVEL, e.inflateLevel + 1);
 		e.inflateUntilDeflate = now + DEFLATE_AFTER_MS;
 		lastPumpAt = now;
+		sfxBlip();
 		if (e.inflateLevel >= POP_AT_LEVEL) {
 			e.state = 'popping';
 			e.inflateUntilDeflate = now;
 			state.score += e.points;
+			sfxPop();
 			retractHarpoon(now);
 		}
 		state = state;
@@ -501,6 +511,7 @@
 						rock.crushed.add(e.id);
 						e.state = 'popping';
 						e.inflateUntilDeflate = now;
+						sfxPop();
 						// Crush bonus scales with stack of crushed enemies.
 						const bonusTable = [1000, 2500, 4000, 6000];
 						const tier = Math.min(rock.crushed.size - 1, bonusTable.length - 1);
@@ -518,6 +529,7 @@
 					rock.cellY = cy; // snap
 					rock.state = 'broken';
 					rock.stateStartedAt = now;
+					sfxThud();
 				}
 			}
 		}
@@ -529,6 +541,7 @@
 		state.statusStartedAt = now;
 		state.harpoon = null;
 		state.fire = null;
+		sfxHit();
 		state = state;
 	}
 
@@ -544,6 +557,8 @@
 				accent: 'var(--rp-gold)',
 				expiresAt: now + 1800
 			};
+			sfxFanfare();
+			reportScore('digdug', state.score);
 			state = state;
 		}
 	}
@@ -558,11 +573,14 @@
 		if (state.lives <= 0) {
 			state.status = 'game-over';
 			state.statusStartedAt = now;
+			const newBest = reportScore('digdug', state.score);
 			state.banner = {
-				text: 'GAME OVER',
-				accent: 'var(--rp-love)',
+				text: newBest ? '🏆 NEW HI-SCORE!' : 'GAME OVER',
+				accent: newBest ? 'var(--rp-gold)' : 'var(--rp-love)',
 				expiresAt: now + 10_000
 			};
+			if (newBest) sfxHighScore();
+			else sfxGameOver();
 			state = state;
 			return;
 		}
@@ -726,8 +744,12 @@
 
 	onDestroy(() => {
 		if (raf) cancelAnimationFrame(raf);
-		window.removeEventListener('keydown', onKeyDown);
-		window.removeEventListener('keyup', onKeyUp);
+		// Record a mid-game exit too, so quitting never loses a best score.
+		reportScore('digdug', state.score);
+		if (typeof window !== 'undefined') {
+			window.removeEventListener('keydown', onKeyDown);
+			window.removeEventListener('keyup', onKeyUp);
+		}
 	});
 </script>
 
@@ -919,9 +941,7 @@
 		max-width: 100%;
 		max-height: 60vh;
 		border: 3px solid var(--accent);
-		box-shadow:
-			0 0 0 2px var(--rp-base),
-			0 0 20px var(--accent);
+		box-shadow: 0 0 0 2px var(--rp-base), 0 0 20px var(--accent);
 	}
 
 	canvas:focus-visible {

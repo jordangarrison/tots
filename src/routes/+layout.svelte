@@ -1,16 +1,67 @@
 <script lang="ts">
+	import { records, formatScore } from '$lib/arcade/scores';
+	import { muted, toggleMuted, sfxBlip } from '$lib/arcade/sounds';
+
 	export const prerender = true;
+
+	const tickerNames: Partial<Record<string, string>> = {
+		digdug: 'DIG DUG',
+		kingdom: 'KINGDOM',
+		adventure: 'ADVENTURE',
+		typing: 'TYPING',
+		molecules: 'MOLECULES',
+		draw: 'DRAW',
+		coloring: 'COLOR',
+		cards: 'CARDS'
+	};
+
+	$: tickerParts = (() => {
+		const parts: string[] = ['★ WELCOME TO TOTS ARCADE ★', 'INSERT COIN'];
+		for (const [id, rec] of Object.entries($records)) {
+			if (rec?.highScore) {
+				parts.push(`${tickerNames[id] ?? id.toUpperCase()} HI-SCORE ${formatScore(rec.highScore)}`);
+			}
+		}
+		const totalPlays = Object.values($records).reduce((n, r) => n + (r?.plays ?? 0), 0);
+		if (totalPlays > 0) parts.push(`${totalPlays} GAMES PLAYED`);
+		parts.push('PRESS START TO PLAY');
+		return parts;
+	})();
+
+	$: tickerText = tickerParts.join('  ◆  ') + '  ◆  ';
+
+	function onSoundToggle() {
+		toggleMuted();
+		// Confirm with a blip when sound just turned ON.
+		if (!$muted) sfxBlip();
+	}
 </script>
 
 <div class="app-wrapper">
 	<header>
 		<div class="marquee">
 			<h1 class="title">
-				<span class="letter love">T</span><span class="letter gold">O</span><span class="letter foam">T</span><span class="letter iris">S</span>
+				<span class="letter love">T</span><span class="letter gold">O</span><span
+					class="letter foam">T</span
+				><span class="letter iris">S</span>
 			</h1>
 			<span class="subtitle">★ ARCADE ★</span>
 		</div>
+		<button
+			class="sound-toggle"
+			type="button"
+			on:click={onSoundToggle}
+			aria-label={$muted ? 'Turn arcade sounds on' : 'Turn arcade sounds off'}
+		>
+			{$muted ? '🔇' : '🔊'}
+		</button>
 	</header>
+	<div class="ticker" aria-hidden="true">
+		<div class="ticker-track">
+			<span class="ticker-text">{tickerText}</span>
+			<span class="ticker-text">{tickerText}</span>
+		</div>
+	</div>
 	<main><slot /></main>
 	<footer>
 		<p>
@@ -55,8 +106,7 @@
 
 	:global(body) {
 		background-color: var(--rp-base);
-		background-image:
-			linear-gradient(var(--rp-overlay) 1px, transparent 1px),
+		background-image: linear-gradient(var(--rp-overlay) 1px, transparent 1px),
 			linear-gradient(90deg, var(--rp-overlay) 1px, transparent 1px);
 		background-size: 32px 32px;
 		color: var(--rp-text);
@@ -92,9 +142,60 @@
 		padding: 0.4rem 0.5rem;
 		background: var(--rp-surface);
 		border-bottom: 3px solid var(--rp-iris);
-		box-shadow:
-			0 0 10px var(--rp-iris),
-			inset 0 0 24px rgba(196, 167, 231, 0.15);
+		box-shadow: 0 0 10px var(--rp-iris), inset 0 0 24px rgba(196, 167, 231, 0.15);
+		position: relative;
+	}
+
+	.sound-toggle {
+		position: absolute;
+		right: 0.6rem;
+		top: 50%;
+		transform: translateY(-50%);
+		background: var(--rp-overlay);
+		border: 2px solid var(--rp-hl-med);
+		border-radius: 4px;
+		font-size: 1rem;
+		line-height: 1;
+		padding: 0.3rem 0.45rem;
+		cursor: pointer;
+	}
+
+	.sound-toggle:hover,
+	.sound-toggle:focus-visible {
+		border-color: var(--rp-foam);
+		box-shadow: 0 0 8px var(--rp-foam);
+		outline: none;
+	}
+
+	.ticker {
+		overflow: hidden;
+		background: var(--rp-hl-low);
+		border-bottom: 2px solid var(--rp-hl-med);
+		padding: 0.2rem 0;
+		white-space: nowrap;
+	}
+
+	.ticker-track {
+		display: inline-flex;
+		animation: ticker-scroll 30s linear infinite;
+	}
+
+	.ticker-text {
+		font-family: 'Press Start 2P', cursive;
+		font-size: 0.55rem;
+		letter-spacing: 0.2em;
+		color: var(--rp-gold);
+		text-shadow: 0 0 4px var(--rp-gold);
+		padding-right: 1rem;
+	}
+
+	@keyframes ticker-scroll {
+		from {
+			transform: translateX(0);
+		}
+		to {
+			transform: translateX(-50%);
+		}
 	}
 
 	.marquee {
@@ -119,19 +220,44 @@
 		animation: bounce 0.8s ease-in-out infinite;
 	}
 
-	.letter.love { color: var(--rp-love); text-shadow: 0 0 8px var(--rp-love), 3px 3px 0 var(--rp-hl-low); }
-	.letter.gold { color: var(--rp-gold); text-shadow: 0 0 8px var(--rp-gold), 3px 3px 0 var(--rp-hl-low); }
-	.letter.foam { color: var(--rp-foam); text-shadow: 0 0 8px var(--rp-foam), 3px 3px 0 var(--rp-hl-low); }
-	.letter.iris { color: var(--rp-iris); text-shadow: 0 0 8px var(--rp-iris), 3px 3px 0 var(--rp-hl-low); }
+	.letter.love {
+		color: var(--rp-love);
+		text-shadow: 0 0 8px var(--rp-love), 3px 3px 0 var(--rp-hl-low);
+	}
+	.letter.gold {
+		color: var(--rp-gold);
+		text-shadow: 0 0 8px var(--rp-gold), 3px 3px 0 var(--rp-hl-low);
+	}
+	.letter.foam {
+		color: var(--rp-foam);
+		text-shadow: 0 0 8px var(--rp-foam), 3px 3px 0 var(--rp-hl-low);
+	}
+	.letter.iris {
+		color: var(--rp-iris);
+		text-shadow: 0 0 8px var(--rp-iris), 3px 3px 0 var(--rp-hl-low);
+	}
 
-	.letter:nth-child(1) { animation-delay: 0s; }
-	.letter:nth-child(2) { animation-delay: 0.1s; }
-	.letter:nth-child(3) { animation-delay: 0.2s; }
-	.letter:nth-child(4) { animation-delay: 0.3s; }
+	.letter:nth-child(1) {
+		animation-delay: 0s;
+	}
+	.letter:nth-child(2) {
+		animation-delay: 0.1s;
+	}
+	.letter:nth-child(3) {
+		animation-delay: 0.2s;
+	}
+	.letter:nth-child(4) {
+		animation-delay: 0.3s;
+	}
 
 	@keyframes bounce {
-		0%, 100% { transform: translateY(0); }
-		50% { transform: translateY(-6px); }
+		0%,
+		100% {
+			transform: translateY(0);
+		}
+		50% {
+			transform: translateY(-6px);
+		}
 	}
 
 	.subtitle {
@@ -144,8 +270,22 @@
 	}
 
 	@keyframes flicker {
-		0%, 19%, 21%, 23%, 25%, 54%, 56%, 100% { opacity: 1; }
-		20%, 22%, 24%, 55% { opacity: 0.5; }
+		0%,
+		19%,
+		21%,
+		23%,
+		25%,
+		54%,
+		56%,
+		100% {
+			opacity: 1;
+		}
+		20%,
+		22%,
+		24%,
+		55% {
+			opacity: 0.5;
+		}
 	}
 
 	main {

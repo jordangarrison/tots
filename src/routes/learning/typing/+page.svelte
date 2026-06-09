@@ -3,8 +3,11 @@
 	import { LESSONS } from '$lib/typing/lessons';
 	import { loadProgress } from '$lib/typing/save';
 	import type { TypingSave, Lesson } from '$lib/typing/types';
+	import { recordPlay } from '$lib/arcade/scores';
 
 	export const prerender = true;
+
+	onMount(() => recordPlay('typing'));
 
 	const tierLabels: Record<Lesson['tier'], string> = {
 		home: 'HOME ROW',
