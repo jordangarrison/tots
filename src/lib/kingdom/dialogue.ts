@@ -144,7 +144,10 @@ const VOICES: Record<CharacterId, Voice> = {
 		],
 		chatter: [
 			{ text: 'Have you visited Isla’s meadow? It smells like sleep-time.', about: 'isla' },
-			{ text: 'Ollie buried a stick by my roses again. I left it. He loves it so.', about: 'ollie' },
+			{
+				text: 'Ollie buried a stick by my roses again. I left it. He loves it so.',
+				about: 'ollie'
+			},
 			{ text: 'Berry Woods is just past my garden. Butterflies live there! 🦋' },
 			{ text: 'Plant a rose seed and wait a little. Good things take time.' },
 			{ text: 'Mommy’s bluebonnets are for looking, not picking. That’s the rule!', about: 'mommy' }
@@ -335,7 +338,10 @@ const VOICES: Record<CharacterId, Voice> = {
 			{ text: 'Take seeds from the bin and plant them. Bluebonnets love new friends.' },
 			{ text: 'Remember: bluebonnets are for looking, never picking. Thank you, love.' },
 			{ text: 'The Sweet Bakery is off the courtyard. Two berries bake one muffin! 🧁' },
-			{ text: 'Daddy tried to count his tulips. They vanished before he hit three!', about: 'daddy' },
+			{
+				text: 'Daddy tried to count his tulips. They vanished before he hit three!',
+				about: 'daddy'
+			},
 			{ text: 'Jane gives the gentlest hugs. Mind the roses when you hug back.', about: 'jane' }
 		],
 		praise: 'You’ve been helping everyone, {name}. That makes my heart so full.',
@@ -367,7 +373,10 @@ const VOICES: Record<CharacterId, Voice> = {
 			{
 				when: (c) => c.inventory.fish > 0,
 				lines: [
-					{ text: 'A fish! Shall we cook it for supper? Ollie will beg, you know.', about: 'ollie' },
+					{
+						text: 'A fish! Shall we cook it for supper? Ollie will beg, you know.',
+						about: 'ollie'
+					},
 					{ text: 'A fish! What a fine catch, sweetheart. 🐟' }
 				]
 			}
@@ -400,7 +409,10 @@ const VOICES: Record<CharacterId, Voice> = {
 		],
 		chatter: [
 			{ text: 'Tulips vanish fast — grab them quick as a wink! 🌷' },
-			{ text: 'Mommy’s rule: bluebonnets are for looking, not picking. Wise queen!', about: 'mommy' },
+			{
+				text: 'Mommy’s rule: bluebonnets are for looking, not picking. Wise queen!',
+				about: 'mommy'
+			},
 			{ text: 'Ollie helped me garden today. There are three new holes.', about: 'ollie' },
 			{ text: 'The beach has the best sand. I built a castle. A tiny one. 🐚' },
 			{ text: 'Try a muffin from the Sweet Bakery. Royal taste buds approve! 🧁' }
@@ -578,7 +590,10 @@ const QUESTS: QuestTemplate[] = [
 			'Will you bring me two roses? Hee hee! 🌹',
 			'Sniff test! It’s very scientific. Thank you!'
 		],
-		reminder: ['Roses grow in the rose garden. Plant, wait, pick!', '{need} to go! My nose is ready.'],
+		reminder: [
+			'Roses grow in the rose garden. Plant, wait, pick!',
+			'{need} to go! My nose is ready.'
+		],
 		complete: [
 			'*sniiiff* Yes! Roses DO smell pink! I knew it! 🌹',
 			'Here’s {reward} so you can smell purple too. 💜'
