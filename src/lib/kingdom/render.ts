@@ -411,37 +411,38 @@ function drawTile(
 		case 'palm': {
 			sandDetail(ctx, px, py);
 			ctx.fillStyle = 'rgba(0,0,0,0.18)';
-			ctx.fillRect(px + 12, py + 29, 14, 3);
-			// Slanted trunk with rings.
-			ctx.fillStyle = '#8a6a45';
-			ctx.fillRect(px + 17, py + 23, 4, 7);
-			ctx.fillRect(px + 15, py + 17, 4, 7);
-			ctx.fillRect(px + 13, py + 11, 4, 7);
+			ctx.fillRect(px + 12, py + 30, 14, 3);
+			// Slanted trunk with rings — dark enough to pop on sand.
 			ctx.fillStyle = '#6b4a30';
-			ctx.fillRect(px + 17, py + 28, 4, 1);
-			ctx.fillRect(px + 15, py + 22, 4, 1);
-			ctx.fillRect(px + 13, py + 16, 4, 1);
+			ctx.fillRect(px + 17, py + 24, 5, 8);
+			ctx.fillRect(px + 15, py + 18, 5, 7);
+			ctx.fillRect(px + 13, py + 12, 5, 7);
+			ctx.fillStyle = '#4a2f1d';
+			ctx.fillRect(px + 17, py + 29, 5, 1);
+			ctx.fillRect(px + 15, py + 23, 5, 1);
+			ctx.fillRect(px + 13, py + 17, 5, 1);
 			// Crown of fronds fanning out.
 			ctx.fillStyle = '#27543c';
-			ctx.fillRect(px + 12, py + 9, 7, 3);
+			ctx.fillRect(px + 12, py + 10, 8, 4);
 			ctx.fillStyle = '#3a8050';
-			ctx.fillRect(px + 4, py + 10, 9, 3);
-			ctx.fillRect(px + 2, py + 12, 3, 2);
-			ctx.fillRect(px + 22, py + 8, 9, 3);
-			ctx.fillRect(px + 30, py + 10, 3, 2);
-			ctx.fillRect(px + 8, py + 5, 7, 3);
-			ctx.fillRect(px + 20, py + 4, 7, 3);
-			ctx.fillRect(px + 14, py + 3, 5, 3);
+			ctx.fillRect(px + 3, py + 10, 10, 3);
+			ctx.fillRect(px + 1, py + 12, 4, 3);
+			ctx.fillRect(px + 21, py + 8, 10, 3);
+			ctx.fillRect(px + 29, py + 10, 4, 3);
+			ctx.fillRect(px + 7, py + 5, 8, 3);
+			ctx.fillRect(px + 19, py + 4, 8, 3);
+			ctx.fillRect(px + 13, py + 2, 6, 3);
 			ctx.fillStyle = '#27543c'; // frond undersides
-			ctx.fillRect(px + 6, py + 12, 7, 1);
-			ctx.fillRect(px + 24, py + 10, 7, 1);
-			// Coconuts.
-			ctx.fillStyle = '#5a4530';
-			ctx.fillRect(px + 13, py + 10, 3, 3);
-			ctx.fillRect(px + 17, py + 11, 3, 3);
+			ctx.fillRect(px + 5, py + 12, 8, 1);
+			ctx.fillRect(px + 23, py + 10, 8, 1);
+			ctx.fillRect(px + 9, py + 7, 6, 1);
+			// Coconuts tucked under the crown.
+			ctx.fillStyle = '#4a2f1d';
+			ctx.fillRect(px + 11, py + 12, 4, 4);
+			ctx.fillRect(px + 17, py + 13, 4, 4);
 			ctx.fillStyle = '#8a6a45';
-			ctx.fillRect(px + 14, py + 11, 1, 1);
-			ctx.fillRect(px + 18, py + 12, 1, 1);
+			ctx.fillRect(px + 12, py + 13, 1, 1);
+			ctx.fillRect(px + 18, py + 14, 1, 1);
 			break;
 		}
 		case 'sandcastle': {
@@ -770,20 +771,22 @@ function drawDecorAt(
 			berryDot(ctx, px + 14, py + 20);
 			break;
 		case 'shell': {
-			// Pink-and-cream spiral seashell.
+			// Pink-and-cream scallop shell, fan up, hinge down.
 			ctx.fillStyle = '#f2c79f';
-			ctx.fillRect(px + 13, py + 8, 11, 2);
-			ctx.fillRect(px + 11, py + 10, 15, 13);
-			ctx.fillRect(px + 9, py + 20, 4, 4);
-			ctx.fillRect(px + 13, py + 23, 11, 3);
-			ctx.fillStyle = '#eb6f92';
-			ctx.fillRect(px + 13, py + 12, 11, 9);
-			ctx.fillStyle = '#f2c79f';
-			ctx.fillRect(px + 15, py + 14, 7, 5);
-			ctx.fillStyle = '#eb6f92';
-			ctx.fillRect(px + 17, py + 16, 3, 2);
+			ctx.fillRect(px + 13, py + 7, 10, 2);
+			ctx.fillRect(px + 10, py + 9, 16, 9);
+			ctx.fillRect(px + 12, py + 18, 12, 3);
+			ctx.fillRect(px + 14, py + 21, 8, 2);
+			ctx.fillStyle = '#eb6f92'; // radiating ribs
+			ctx.fillRect(px + 17, py + 7, 2, 15);
+			ctx.fillRect(px + 13, py + 9, 2, 11);
+			ctx.fillRect(px + 21, py + 9, 2, 11);
+			ctx.fillRect(px + 10, py + 12, 1, 5);
+			ctx.fillRect(px + 25, py + 12, 1, 5);
+			ctx.fillStyle = '#d9986e'; // hinge knob
+			ctx.fillRect(px + 15, py + 23, 6, 3);
 			ctx.fillStyle = '#fff4cc';
-			ctx.fillRect(px + 13, py + 10, 2, 2);
+			ctx.fillRect(px + 14, py + 10, 2, 2);
 			break;
 		}
 		case 'butterfly':

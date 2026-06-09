@@ -82,7 +82,11 @@
 	let lastTickAt = 0;
 
 	// Open conversation. While set, movement is paused and SPACE advances pages.
-	let dialogue: { speakerId: CharacterId; pages: string[]; onClose: () => void } | null = null;
+	let dialogue: {
+		speakerId: CharacterId;
+		pages: string[];
+		onClose: (() => void) | null;
+	} | null = null;
 	let panelRef: DialoguePanel | null = null;
 
 	const ITEM_EMOJI: Record<ItemId, string> = {
@@ -171,7 +175,11 @@
 	const FACINGS: Facing[] = ['up', 'down', 'left', 'right'];
 
 	function npcEntAt(x: number, y: number): NpcEnt | null {
-		return npcEnts.find((n) => (n.x === x && n.y === y) || (n.moveFrom?.x === x && n.moveFrom?.y === y)) ?? null;
+		return (
+			npcEnts.find(
+				(n) => (n.x === x && n.y === y) || (n.moveFrom?.x === x && n.moveFrom?.y === y)
+			) ?? null
+		);
 	}
 
 	function isCellBlocked(x: number, y: number): boolean {
@@ -248,6 +256,10 @@
 	}
 
 	function transitionTo(areaId: SaveState['areaId'], toX: number, toY: number) {
+		// Drop held movement so a held key can't carry the player straight back
+		// through the return door (or out of the doorway before they look around).
+		heldDirs.clear();
+		lastDir = null;
 		state.areaId = areaId;
 		state.playerX = toX;
 		state.playerY = toY;
@@ -305,7 +317,10 @@
 		if (candidates.length === 0) return;
 		const pick = candidates[Math.floor(Math.random() * candidates.length)];
 		const lifetimeMs = def.lifetimeMs === null ? null : def.lifetimeMs + Math.random() * 3000;
-		groundItems = [...groundItems, { itemId: def.itemId, x: pick.x, y: pick.y, spawnedAt: now, lifetimeMs }];
+		groundItems = [
+			...groundItems,
+			{ itemId: def.itemId, x: pick.x, y: pick.y, spawnedAt: now, lifetimeMs }
+		];
 	}
 
 	const PICKUP_LINES: Partial<Record<ItemId, string>> = {
@@ -468,7 +483,9 @@
 		state = state;
 		sfxFanfare();
 		showBubble(
-			`💖 +1 heart with ${characters[t.npc].name}! Got ${t.rewardCount}× ${ITEM_EMOJI[t.rewardItemId]}`,
+			`💖 +1 heart with ${characters[t.npc].name}! Got ${t.rewardCount}× ${
+				ITEM_EMOJI[t.rewardItemId]
+			}`,
 			'var(--rp-love)',
 			4200
 		);
@@ -485,7 +502,7 @@
 		const ctx = dialogueCtx(npcId, firstMeeting);
 
 		let pages: string[];
-		let onClose: () => void = () => {};
+		let onClose: (() => void) | null = null;
 
 		if (aq) {
 			const t = questById(aq.id);
@@ -527,7 +544,7 @@
 		const ent = npcEnts.find((e) => e.id === d.speakerId);
 		if (ent) ent.nextThinkAt = performance.now() + 1200 + Math.random() * 1800;
 		dialogue = null;
-		d.onClose();
+		d.onClose?.();
 	}
 
 	function computeMarks(): Partial<Record<CharacterId, NpcMark>> {
@@ -817,7 +834,8 @@
 		const tile = tileAt(area, tx, ty);
 		if (tile === 'water') return '▶ Cast line';
 		if (tile === 'seed-bin') return '▶ Take a seed';
-		if (tile === 'oven') return state.inventory.berry >= 2 ? '▶ Bake a muffin!' : '▶ Oven (needs 2 🫐)';
+		if (tile === 'oven')
+			return state.inventory.berry >= 2 ? '▶ Bake a muffin!' : '▶ Oven (needs 2 🫐)';
 		if (tile === 'bluebonnet') return '▶ Look (no picking)';
 		if (tile && TILE_FLAVOR[tile]) return '▶ Look';
 
@@ -1123,7 +1141,8 @@
 		<div class="quests" aria-label="Errands">
 			{#each questChips as q (q.npc)}
 				<span class="quest-chip" class:ready={q.ready} style="--chip-accent: {q.accent};">
-					📋 {q.npc}: {q.emoji} {q.have}/{q.need}{q.ready ? ' ✓' : ''}
+					📋 {q.npc}: {q.emoji}
+					{q.have}/{q.need}{q.ready ? ' ✓' : ''}
 				</span>
 			{/each}
 		</div>

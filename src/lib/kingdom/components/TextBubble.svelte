@@ -25,9 +25,7 @@
 		font-family: 'VT323', monospace;
 		font-size: 1.15rem;
 		line-height: 1.2;
-		box-shadow:
-			0 0 0 2px var(--rp-base),
-			0 0 14px var(--accent);
+		box-shadow: 0 0 0 2px var(--rp-base), 0 0 14px var(--accent);
 		text-align: center;
 		z-index: 5;
 		display: flex;

@@ -40,7 +40,11 @@ export function loadSave(): SaveState | null {
 		if (!raw) return null;
 		const parsed = JSON.parse(raw);
 		if (parsed && (parsed.version === 1 || parsed.version === 2)) {
-			return migrate(parsed);
+			const wasOld = parsed.version !== 2;
+			const save = migrate(parsed);
+			// Persist upgraded saves right away so the migration is one-shot.
+			if (wasOld) writeSave(save);
+			return save;
 		}
 		return null;
 	} catch {

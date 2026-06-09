@@ -296,18 +296,18 @@ function buildRoyalLady(o: RoyalLook, view: View, p: Pose): Rect[] {
 		gown(false);
 		add(6.5, t + 7.5, 0.75, 1.25, o.skin);
 		add(10.75, t + 7.5, 0.75, 1.25, o.skin);
-		add(7 + ft, 15.25, 1.5, 0.75, SHOE);
-		add(9.5 - ft, 15.25, 1.5, 0.75, SHOE);
+		add(7 + ft, 15, 1.5, 1, SHOE);
+		add(9.5 - ft, 15, 1.5, 1, SHOE);
 		if (o.bun) {
-			add(8.25, t + 4.25, 1.5, 2.5, o.skin); // nape of the neck
+			add(8.25, t + 4.25, 1.5, 2.75, o.skin); // nape of the neck
 		}
 		add(5.75, t + 1.5, 6.5, 3, o.hair); // back of head
 		if (o.bun) {
 			add(7.75, t + 3.5, 2.5, 2.25, o.hair); // bun knob
 			add(7.75, t + 5, 2.5, 0.5, o.gown); // matching scrunchie
 		} else {
-			add(6, t + 4.5, 6, o.backLen, o.hair); // hair falling down the back
-			add(6.5, t + 4.5 + o.backLen, 5, 0.75, o.hair);
+			add(6.25, t + 4.5, 5.5, o.backLen, o.hair); // hair falling down the back
+			add(6.75, t + 4.5 + o.backLen, 4.5, 0.75, o.hair);
 		}
 		crown(9);
 		return r;
@@ -316,18 +316,17 @@ function buildRoyalLady(o: RoyalLook, view: View, p: Pose): Rect[] {
 	// side view (authored facing right; mirrored for left)
 	gown(true);
 	add(9.25 - ft * 0.5, t + 7.75, 0.75, 1.5, o.skin); // swinging hand
-	add(7.25 - ft, 15.25, 1.5, 0.75, SHOE); // back foot
-	add(9 + ft, 15.25, 1.5, 0.75, SHOE); // front foot
-	add(9.5, t + 5.5, 1, 1.25, o.skin); // neck
+	add(7.25 - ft, 15, 1.5, 1, SHOE); // back foot
+	add(9 + ft, 15, 1.5, 1, SHOE); // front foot
+	add(9.5, t + 5.5, 1, 1.5, o.skin); // neck
 	add(6.25, t + 1.5, 5, 3.25, o.hair); // hair mass over top + back
 	if (o.bun) {
-		add(5.5, t + 2.5, 1.25, 1.75, o.hair); // bun at the back
-		add(5.75, t + 4, 1, 0.5, o.gown);
+		add(5.25, t + 2.25, 1.5, 2.25, o.hair); // bun at the back
 	} else {
 		add(6, t + 4.5, 1.75, o.sideLock, o.hair); // hair down the back
 		add(6.25, t + 4.5 + o.sideLock, 1.25, 0.75, o.hair);
 	}
-	add(9.25, t + 3, 2, 2.5, o.skin); // face (fringe above stays hair)
+	add(9.25, t + 3, 2, 2.75, o.skin); // face (fringe above stays hair)
 	add(11.25, t + 3.75, 0.5, 0.75, o.skin); // button nose
 	if (p.blink) {
 		add(10.25, t + 4, 0.75, 0.5, OUTLINE);
@@ -376,7 +375,7 @@ function buildKing(view: View, p: Pose): Rect[] {
 		add(5.75, t + 6.5, 1, 4.5, K_CAPE); // cape at his sides
 		add(11.25, t + 6.5, 1, 4.5, K_CAPE);
 		add(7, t + 3.25, 4, 3.25, SKIN); // face
-		add(6, t + 1.5, 6, 2.25, K_HAIR); // short hair
+		add(6, t + 1.5, 6, 1.75, K_HAIR); // short hair
 		add(6.75, t + 3.5, 0.75, 1.75, K_HAIR); // sideburns
 		add(10.5, t + 3.5, 0.75, 1.75, K_HAIR);
 		if (p.blink) {
@@ -396,18 +395,18 @@ function buildKing(view: View, p: Pose): Rect[] {
 		add(8.5, t + 9, 1, 0.75, K_GLINT); // buckle
 		add(6, t + 8.5, 0.75, 1.25, SKIN); // hands over the cape
 		add(11.25, t + 8.5, 0.75, 1.25, SKIN);
-		add(7.5, t + 9.75, 1.25, liftL ? 2.5 : 3, K_CAPE); // legs
-		add(9.25, t + 9.75, 1.25, liftR ? 2.5 : 3, K_CAPE);
-		add(7.25, liftL ? 14.75 : 15.25, 1.75, 0.75, K_BOOT);
-		add(9, liftR ? 14.75 : 15.25, 1.75, 0.75, K_BOOT);
+		add(7.5, t + 9.75, 1.25, liftL ? 2.25 : 2.75, K_CAPE); // legs
+		add(9.25, t + 9.75, 1.25, liftR ? 2.25 : 2.75, K_CAPE);
+		add(7.25, liftL ? 14.5 : 15, 1.75, 1, K_BOOT);
+		add(9, liftR ? 14.5 : 15, 1.75, 1, K_BOOT);
 		return r;
 	}
 
 	if (view === 'up') {
 		add(7.5, 14.25, 1.25, 1, K_CAPE); // legs peeking under the cape
 		add(9.25, 14.25, 1.25, 1, K_CAPE);
-		add(7.25, liftL ? 14.75 : 15.25, 1.75, 0.75, K_BOOT);
-		add(9, liftR ? 14.75 : 15.25, 1.75, 0.75, K_BOOT);
+		add(7.25, liftL ? 14.5 : 15, 1.75, 1, K_BOOT);
+		add(9, liftR ? 14.5 : 15, 1.75, 1, K_BOOT);
 		add(5.75, t + 5.5, 6.5, 14.25 - (t + 5.5), K_CAPE); // flowing cape
 		add(8.75, t + 6.75, 0.5, 5, K_CAPE_DARK); // cape fold
 		add(5.75, t + 5.5, 6.5, 0.75, K_TRIM); // gold collar
@@ -419,10 +418,10 @@ function buildKing(view: View, p: Pose): Rect[] {
 	// side view (authored facing right)
 	add(6, t + 6, 1.75, 6, K_CAPE); // cape trailing behind
 	add(6.5, t + 7, 0.5, 4.5, K_CAPE_DARK);
-	add(7.25 - ft, 12.25, 1.25, liftL ? 2.5 : 3, K_CAPE); // back leg
-	add(9.5 + ft, 12.25, 1.25, liftR ? 2.5 : 3, K_CAPE); // front leg
-	add(7 - ft, liftL ? 14.75 : 15.25, 1.75, 0.75, K_BOOT);
-	add(9.25 + ft, liftR ? 14.75 : 15.25, 1.75, 0.75, K_BOOT);
+	add(7.25 - ft, 12.25, 1.25, liftL ? 2.25 : 2.75, K_CAPE); // back leg
+	add(9.5 + ft, 12.25, 1.25, liftR ? 2.25 : 2.75, K_CAPE); // front leg
+	add(7 - ft, liftL ? 14.5 : 15, 1.75, 1, K_BOOT);
+	add(9.25 + ft, liftR ? 14.5 : 15, 1.75, 1, K_BOOT);
 	add(7.5, t + 6.5, 3.5, 2.5, K_TUNIC); // tunic
 	add(7.25, t + 9.75, 3.75, 0.75, K_TUNIC); // tunic skirt over the legs
 	add(7.5, t + 9, 3.5, 0.75, K_TRIM); // belt
@@ -493,8 +492,8 @@ function buildDog(view: View, p: Pose): Rect[] {
 		add(7.75, 12.5, 2.5, 1, D_BAND);
 		add(8.5, 13.5, 1, 0.5, D_BAND);
 		if (p.moving) add(8.75, 11.75, 0.75, 1, D_TONGUE); // happy trot tongue
-		add(6.75 + ft, 15.25, 1.5, 0.75, D_WHITE); // white paws
-		add(9.75 - ft, 15.25, 1.5, 0.75, D_WHITE);
+		add(6.75 + ft, 15, 1.5, 1, D_WHITE); // white paws
+		add(9.75 - ft, 15, 1.5, 1, D_WHITE);
 		return r;
 	}
 
@@ -512,8 +511,8 @@ function buildDog(view: View, p: Pose): Rect[] {
 		add(8.5, 12.25, 1, 0.5, D_BAND);
 		add(8.5 + wag, 14.75, 1, 1.25, D_BODY); // wagging stub tail
 		add(8.75 + wag, 14.75, 0.5, 0.5, D_WHITE);
-		add(6.75 + ft, 15.25, 1.25, 0.75, D_WHITE); // hind paws
-		add(10 - ft, 15.25, 1.25, 0.75, D_WHITE);
+		add(6.75 + ft, 15, 1.25, 1, D_WHITE); // hind paws
+		add(10 - ft, 15, 1.25, 1, D_WHITE);
 		return r;
 	}
 
@@ -522,7 +521,7 @@ function buildDog(view: View, p: Pose): Rect[] {
 	const trotB = p.moving && p.frame === 1; // diagonal pair B lifted
 	const leg = (x: number, lifted: boolean): void => {
 		add(x, 14, 1, lifted ? 0.75 : 1.25, D_BODY);
-		add(x - 0.25, lifted ? 14.75 : 15.25, 1.5, 0.75, D_WHITE);
+		add(x - 0.25, lifted ? 14.5 : 15, 1.5, 1, D_WHITE);
 	};
 	add(4.75, 10.5 + wag, 1.25, 1, D_BODY); // wagging stub tail
 	add(4.75, 10.5 + wag, 0.5, 0.5, D_WHITE);
