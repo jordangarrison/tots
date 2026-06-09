@@ -11,9 +11,13 @@ export function plant(now: number): PlotState {
 	return { stage: 'seeded', stageStartedAt: now };
 }
 
-export function pickLavender(now: number): PlotState {
+/** Picking a regrowing plant (lavender, berries): bush goes bare, then regrows. */
+export function pickRegrowing(now: number): PlotState {
 	return { stage: 'regrowing', stageStartedAt: now };
 }
+
+/** @deprecated old name, kept for callers mid-migration. */
+export const pickLavender = pickRegrowing;
 
 // Returns the plot state advanced to the correct stage given the current time.
 // Pure — never mutates the input. Returns `null` when the plot has returned to
@@ -43,9 +47,9 @@ function step(state: PlotState, kind: PlotKind, now: number): PlotState | null {
 			};
 		}
 	}
-	if (kind === 'lavender') {
+	if (kind === 'lavender' || kind === 'berry') {
 		if (state.stage === 'regrowing' && elapsed >= STAGE_DURATIONS_MS.regrowing) {
-			// Lavender's default state is "bloomed", represented by no state row.
+			// Regrowing plants' default state is "bloomed", represented by no state row.
 			return null;
 		}
 	}
@@ -59,7 +63,7 @@ export function harvest(): PlotState | null {
 
 export function isHarvestable(state: PlotState | undefined, kind: PlotKind): boolean {
 	if (kind === 'rose') return state?.stage === 'bloomed';
-	if (kind === 'lavender') return !state || state.stage === 'empty';
+	if (kind === 'lavender' || kind === 'berry') return !state || state.stage === 'empty';
 	// Bluebonnets are never harvested — Queen Mommy says no picking!
 	return false;
 }

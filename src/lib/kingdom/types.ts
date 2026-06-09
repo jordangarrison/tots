@@ -7,7 +7,10 @@ export type AreaId =
 	| 'pond'
 	| 'cottage'
 	| 'bluebonnet-garden'
-	| 'tulip-garden';
+	| 'tulip-garden'
+	| 'beach'
+	| 'berry-woods'
+	| 'bakery';
 
 export type TileKind =
 	| 'grass'
@@ -25,11 +28,22 @@ export type TileKind =
 	| 'wood-floor'
 	| 'bed'
 	| 'hearth'
-	| 'window';
+	| 'window'
+	| 'fence'
+	| 'dock'
+	| 'palm'
+	| 'sandcastle'
+	| 'dune-grass'
+	| 'berry-bush'
+	| 'oven'
+	| 'counter'
+	| 'table'
+	| 'rug'
+	| 'bookshelf';
 
 export type Facing = 'up' | 'down' | 'left' | 'right';
 
-export type PlotKind = 'rose' | 'lavender' | 'bluebonnet';
+export type PlotKind = 'rose' | 'lavender' | 'bluebonnet' | 'berry';
 
 export interface PlotDef {
 	id: string;
@@ -52,6 +66,42 @@ export interface NpcDef {
 	id: CharacterId;
 	x: number;
 	y: number;
+	/** Max tiles the NPC may wander from home. Omit/0 = stands still. */
+	wander?: number;
+}
+
+export type CritterKind = 'butterfly' | 'bee' | 'petal' | 'dragonfly' | 'bird';
+
+/** Ambient creature, simulated per-session (never persisted). Coords are tile-space floats. */
+export interface Critter {
+	kind: CritterKind;
+	x: number;
+	y: number;
+	vx: number;
+	vy: number;
+	/** Free-running animation phase offset so critters don't move in lockstep. */
+	phase: number;
+	spawnedAt: number;
+}
+
+/** Item lying on the ground waiting to be picked up (wild tulips, seashells…). */
+export interface GroundItem {
+	itemId: ItemId;
+	x: number;
+	y: number;
+	spawnedAt: number;
+	/** null = stays until picked; otherwise despawns after this long. */
+	lifetimeMs: number | null;
+}
+
+/** Per-area spawner config for ground items. */
+export interface GroundSpawnDef {
+	itemId: ItemId;
+	everyMs: number;
+	max: number;
+	lifetimeMs: number | null;
+	/** Tile kinds the item may appear on. */
+	on: TileKind[];
 }
 
 export interface AreaDef {
@@ -65,6 +115,12 @@ export interface AreaDef {
 	plots: PlotDef[];
 	npcs: NpcDef[];
 	welcome: string;
+	/** Ambient critter kinds that live here (spawn/behavior in critters.ts). */
+	critters?: CritterKind[];
+	/** Ground-item spawners (replaces the old hardcoded wild-tulip logic). */
+	spawns?: GroundSpawnDef[];
+	/** Butterflies here can be caught with SPACE (Berry Woods). */
+	catchButterflies?: boolean;
 }
 
 export type PlotStage = 'empty' | 'seeded' | 'sprout' | 'bloomed' | 'regrowing';
@@ -74,15 +130,30 @@ export interface PlotState {
 	stageStartedAt: number;
 }
 
-export type ItemId = 'rose' | 'lavender' | 'fish' | 'tulip' | 'seed';
+export type ItemId =
+	| 'rose'
+	| 'lavender'
+	| 'fish'
+	| 'tulip'
+	| 'seed'
+	| 'berry'
+	| 'shell'
+	| 'butterfly'
+	| 'muffin';
 
-export interface Inventory {
-	rose: number;
-	lavender: number;
-	fish: number;
-	tulip: number;
-	seed: number;
-}
+export const ALL_ITEMS: ItemId[] = [
+	'rose',
+	'lavender',
+	'fish',
+	'tulip',
+	'seed',
+	'berry',
+	'shell',
+	'butterfly',
+	'muffin'
+];
+
+export type Inventory = Record<ItemId, number>;
 
 export interface PlacedDecor {
 	areaId: AreaId;
@@ -91,8 +162,19 @@ export interface PlacedDecor {
 	itemId: ItemId;
 }
 
+/** A fetch errand an NPC has asked the player to run. */
+export interface ActiveQuest {
+	/** QuestTemplate id from dialogue.ts. */
+	id: string;
+	npc: CharacterId;
+	itemId: ItemId;
+	count: number;
+}
+
+export const MAX_HEARTS = 5;
+
 export interface SaveState {
-	version: 1;
+	version: 2;
 	characterId: CharacterId;
 	areaId: AreaId;
 	playerX: number;
@@ -102,12 +184,23 @@ export interface SaveState {
 	plots: Record<string, PlotState>;
 	visitedAreas: AreaId[];
 	placedDecor: PlacedDecor[];
+	/** Friendship hearts per character, 0..MAX_HEARTS. */
+	friendship: Record<CharacterId, number>;
+	/** At most one active errand per NPC. */
+	activeQuests: Partial<Record<CharacterId, ActiveQuest>>;
+	questsDone: number;
 }
 
 export const SAVE_KEY = 'tots:kingdom:save:v1';
 
 export function emptyInventory(): Inventory {
-	return { rose: 0, lavender: 0, fish: 0, tulip: 0, seed: 0 };
+	const inv = {} as Inventory;
+	for (const id of ALL_ITEMS) inv[id] = 0;
+	return inv;
+}
+
+export function emptyFriendship(): Record<CharacterId, number> {
+	return { jane: 0, isla: 0, ollie: 0, mommy: 0, daddy: 0 };
 }
 
 export function isWalkable(kind: TileKind): boolean {
@@ -116,6 +209,9 @@ export function isWalkable(kind: TileKind): boolean {
 		case 'path':
 		case 'sand':
 		case 'wood-floor':
+		case 'dock':
+		case 'dune-grass':
+		case 'rug':
 			return true;
 		default:
 			return false;

@@ -72,7 +72,7 @@
 		{
 			id: 'kingdom',
 			title: 'KINGDOM',
-			description: "Jane, Isla, and Ollie's cozy little kingdom. Plant roses. Say hi.",
+			description: 'A cozy family kingdom. Make friends, run errands, explore the beach & woods.',
 			emoji: '🌷',
 			href: '/games/kingdom',
 			accent: 'var(--rp-foam)',

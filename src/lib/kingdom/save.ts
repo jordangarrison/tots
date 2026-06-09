@@ -1,10 +1,10 @@
 import type { CharacterId } from '$lib/characters';
-import { SAVE_KEY, emptyInventory } from './types';
+import { SAVE_KEY, emptyFriendship, emptyInventory } from './types';
 import type { SaveState } from './types';
 
 export function newSave(characterId: CharacterId): SaveState {
 	return {
-		version: 1,
+		version: 2,
 		characterId,
 		areaId: 'courtyard',
 		playerX: 4,
@@ -13,8 +13,24 @@ export function newSave(characterId: CharacterId): SaveState {
 		inventory: emptyInventory(),
 		plots: {},
 		visitedAreas: ['courtyard'],
-		placedDecor: []
+		placedDecor: [],
+		friendship: emptyFriendship(),
+		activeQuests: {},
+		questsDone: 0
 	};
+}
+
+/** Upgrade any older save shape to the current version in place. */
+function migrate(parsed: Record<string, unknown>): SaveState {
+	const save = parsed as unknown as SaveState;
+	save.version = 2;
+	// Backfill any inventory keys added since this save was written.
+	save.inventory = { ...emptyInventory(), ...(parsed.inventory as object) };
+	if (!Array.isArray(save.placedDecor)) save.placedDecor = [];
+	save.friendship = { ...emptyFriendship(), ...(parsed.friendship as object) };
+	if (typeof save.activeQuests !== 'object' || save.activeQuests === null) save.activeQuests = {};
+	if (typeof save.questsDone !== 'number') save.questsDone = 0;
+	return save;
 }
 
 export function loadSave(): SaveState | null {
@@ -23,11 +39,8 @@ export function loadSave(): SaveState | null {
 		const raw = window.localStorage.getItem(SAVE_KEY);
 		if (!raw) return null;
 		const parsed = JSON.parse(raw);
-		if (parsed && parsed.version === 1) {
-			// Backfill any inventory keys added since this save was written.
-			parsed.inventory = { ...emptyInventory(), ...parsed.inventory };
-			if (!Array.isArray(parsed.placedDecor)) parsed.placedDecor = [];
-			return parsed as SaveState;
+		if (parsed && (parsed.version === 1 || parsed.version === 2)) {
+			return migrate(parsed);
 		}
 		return null;
 	} catch {
