@@ -240,11 +240,11 @@ function buildRoyalLady(o: RoyalLook, view: View, p: Pose): Rect[] {
 
 	const gown = (side: boolean): void => {
 		const n = side ? 0.5 : 0; // side view is a touch narrower
-		add(7 + n, t + 6.5, 4 - n, 1.5, o.gown);
+		add(7 + n, t + 6.75, 4 - n, 1.25, o.gown);
 		add(6.75 + n, t + 8, 4.5 - n, 12.25 - (t + 8), o.gown);
-		add(6.25 + n + sw * 0.5, 12.25, 5.5 - n, 1.5, o.gown);
-		add(5.75 + n + sw, 13.75, 6.5 - n, 1.5, o.gown);
-		add(5.75 + n + sw, 14.5, 6.5 - n, 0.75, o.gownDark);
+		add(6.25 + n + sw * 0.5, 12.25, 5.5 - n, 1.25, o.gown);
+		add(5.75 + n + sw, 13.5, 6.5 - n, 1.5, o.gown);
+		add(5.75 + n + sw, 14.25, 6.5 - n, 0.75, o.gownDark);
 		add(8.75, t + 8, 0.5, 3, o.gownDark);
 	};
 
@@ -268,27 +268,27 @@ function buildRoyalLady(o: RoyalLook, view: View, p: Pose): Rect[] {
 		gown(false);
 		add(6.5, t + 7.5, 0.75, 1.25, o.skin); // hands
 		add(10.75, t + 7.5, 0.75, 1.25, o.skin);
-		add(7 + ft, 15.25, 1.5, 0.75, SHOE); // little feet under the hem
-		add(9.5 - ft, 15.25, 1.5, 0.75, SHOE);
-		add(7.25, t + 3.5, 3.5, 3, o.skin); // face
-		add(5.75, t + 1.5, 6.5, 2.75, o.hair); // hair cap + fringe
+		add(7 + ft, 15, 1.5, 1, SHOE); // little feet under the hem
+		add(9.5 - ft, 15, 1.5, 1, SHOE);
+		add(7, t + 3.5, 4, 3.25, o.skin); // face
+		add(5.75, t + 1.5, 6.5, 2, o.hair); // hair cap
 		if (o.sideLock > 0) {
-			add(5.75, t + 4, 1.5, o.sideLock, o.hair);
-			add(10.75, t + 4, 1.5, o.sideLock, o.hair);
+			add(5.75, t + 3, 1.5, o.sideLock + 1, o.hair); // locks framing the face
+			add(10.75, t + 3, 1.5, o.sideLock + 1, o.hair);
 		}
 		if (p.blink) {
-			add(7.75, t + 5.25, 1, 0.5, OUTLINE);
-			add(9.25, t + 5.25, 1, 0.5, OUTLINE);
+			add(7.5, t + 5, 1, 0.5, OUTLINE);
+			add(9.5, t + 5, 1, 0.5, OUTLINE);
 		} else {
-			add(7.75, t + 4.75, 1, 1, OUTLINE);
-			add(9.25, t + 4.75, 1, 1, OUTLINE);
+			add(7.5, t + 4.5, 1, 1, OUTLINE);
+			add(9.5, t + 4.5, 1, 1, OUTLINE);
 		}
 		add(7.25, t + 5.75, 0.5, 0.5, CHEEK);
 		add(10.25, t + 5.75, 0.5, 0.5, CHEEK);
 		add(8.5, t + 6, 1, 0.5, MOUTH);
 		crown(9);
-		add(7.25 + sw, 13, 0.5, 0.5, o.glint); // gown sequins
-		add(10 + sw, 14.25, 0.5, 0.5, o.glint);
+		add(7.25 + sw, 12.75, 0.5, 0.5, o.glint); // gown sequins
+		add(10 + sw, 14, 0.5, 0.5, o.glint);
 		return r;
 	}
 
